@@ -26,7 +26,9 @@ create table public.exercises (
   workout_id uuid not null references public.workouts (id) on delete cascade,
   name text not null,
   sets int not null default 3 check (sets > 0),
-  reps text not null default '10'
+  reps text not null default '10',
+  weight text not null default '',
+  notes text not null default ''
 );
 
 create index exercises_workout_id_idx on public.exercises (workout_id);

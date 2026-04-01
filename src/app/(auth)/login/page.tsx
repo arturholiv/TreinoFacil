@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PrimaryButton } from "@/components/primary-button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
@@ -12,19 +12,62 @@ export default function LoginPage() {
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err: string | null = params.get("error");
+    if (!err) {
+      return;
+    }
+    if (err === "missing_code") {
+      setErrorMessage(
+        "Link de confirmação inválido ou incompleto. Tente entrar de novo ou peça um novo email.",
+      );
+    } else if (err === "config") {
+      setErrorMessage(
+        "Servidor sem variáveis do Supabase. Confira o .env e reinicie npm run dev.",
+      );
+    } else {
+      setErrorMessage(decodeURIComponent(err));
+    }
+    window.history.replaceState({}, "", "/login");
+  }, []);
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrorMessage("");
     setIsSubmitting(true);
-    const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setIsSubmitting(false);
-    if (error) {
-      setErrorMessage(error.message);
-      return;
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setErrorMessage(error.message);
+        return;
+      }
+      router.replace("/home");
+      router.refresh();
+    } catch (unknownError: unknown) {
+      const message: string =
+        unknownError instanceof Error ? unknownError.message : String(unknownError);
+      if (
+        message.includes("Missing NEXT_PUBLIC_SUPABASE") ||
+        message.includes("public key")
+      ) {
+        setErrorMessage(
+          "Configure NEXT_PUBLIC_SUPABASE_URL e a chave (anon ou publishable) no .env, salve e reinicie o servidor com npm run dev.",
+        );
+      } else if (
+        message === "Failed to fetch" ||
+        message.includes("Failed to fetch") ||
+        message.includes("NetworkError")
+      ) {
+        setErrorMessage(
+          "Não foi possível conectar ao Supabase. Confira a URL do projeto, teste outra rede ou desative bloqueadores. Se usar chave publishable (sb_publishable_…) e ainda falhar, copie também a chave anon (JWT) em Project Settings → API e defina NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+        );
+      } else {
+        setErrorMessage(message);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    router.replace("/home");
-    router.refresh();
   }
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4 py-10">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AppCard } from "@/components/app-card";
 import { PageHeader } from "@/components/page-header";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
@@ -18,7 +18,11 @@ export default function WorkoutDetailPage() {
   const [workout, setWorkout] = useState<WorkoutRow | null>(null);
   const [exercises, setExercises] = useState<ExerciseWithDone[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const exercisesRef = useRef<ExerciseWithDone[]>([]);
   const logDate: string = getLocalDateYmd();
+  useEffect(() => {
+    exercisesRef.current = exercises;
+  }, [exercises]);
   const loadData = useCallback(async () => {
     if (!workoutId) {
       return;
@@ -47,7 +51,7 @@ export default function WorkoutDetailPage() {
     setWorkout(workoutRow as WorkoutRow);
     const { data: exerciseRows, error: exError } = await supabase
       .from("exercises")
-      .select("id,workout_id,name,sets,reps")
+      .select("id,workout_id,name,sets,reps,weight,notes")
       .eq("workout_id", workoutId)
       .order("id", { ascending: true });
     if (exError) {
@@ -72,10 +76,19 @@ export default function WorkoutDetailPage() {
       doneMap[row.exercise_id] = row.completed;
     });
     setExercises(
-      exerciseRows.map((row) => ({
-        ...(row as ExerciseRow),
-        isCompleted: Boolean(doneMap[(row as ExerciseRow).id]),
-      })),
+      exerciseRows.map((row) => {
+        const base = row as ExerciseRow & { weight?: string; notes?: string };
+        return {
+          id: base.id,
+          workout_id: base.workout_id,
+          name: base.name,
+          sets: base.sets,
+          reps: base.reps,
+          weight: base.weight ?? "",
+          notes: base.notes ?? "",
+          isCompleted: Boolean(doneMap[base.id]),
+        };
+      }),
     );
     setIsLoading(false);
   }, [workoutId, logDate]);
@@ -129,6 +142,30 @@ export default function WorkoutDetailPage() {
       }
     }
   }
+  function updateExerciseMeta(
+    exerciseId: string,
+    patch: Partial<Pick<ExerciseRow, "notes" | "weight">>,
+  ) {
+    setExercises((prev) =>
+      prev.map((ex) => (ex.id === exerciseId ? { ...ex, ...patch } : ex)),
+    );
+  }
+  async function persistExerciseMeta(exerciseId: string) {
+    const row: ExerciseWithDone | undefined = exercisesRef.current.find(
+      (e) => e.id === exerciseId,
+    );
+    if (!row) {
+      return;
+    }
+    const supabase = getSupabaseBrowserClient();
+    const { error } = await supabase
+      .from("exercises")
+      .update({ notes: row.notes, weight: row.weight })
+      .eq("id", exerciseId);
+    if (error) {
+      console.error(error);
+    }
+  }
   if (isLoading) {
     return (
       <>
@@ -176,14 +213,15 @@ export default function WorkoutDetailPage() {
           {exercises.map((ex) => (
             <li key={ex.id}>
               <AppCard className="!py-4">
-                <label className="flex cursor-pointer items-start gap-4">
+                <div className="flex items-start gap-4">
                   <input
                     type="checkbox"
                     checked={ex.isCompleted}
                     onChange={(e) => void toggleExercise(ex.id, e.target.checked)}
+                    aria-label={`Concluído: ${ex.name}`}
                     className="mt-1 size-6 shrink-0 rounded-md border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
                   />
-                  <span className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1">
                     <span
                       className={`block text-base font-medium ${ex.isCompleted ? "text-[var(--muted-foreground)] line-through" : ""}`}
                     >
@@ -192,8 +230,29 @@ export default function WorkoutDetailPage() {
                     <span className="mt-1 block text-sm text-[var(--muted-foreground)]">
                       {ex.sets}×{ex.reps}
                     </span>
-                  </span>
-                </label>
+                    <label className="mt-4 flex flex-col gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
+                      Peso
+                      <input
+                        value={ex.weight}
+                        onChange={(e) => updateExerciseMeta(ex.id, { weight: e.target.value })}
+                        onBlur={() => void persistExerciseMeta(ex.id)}
+                        placeholder="Ex.: 22,5 kg"
+                        className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm font-normal text-[var(--foreground)] outline-none ring-[var(--accent)] focus:ring-2"
+                      />
+                    </label>
+                    <label className="mt-3 flex flex-col gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
+                      Notas
+                      <textarea
+                        value={ex.notes}
+                        onChange={(e) => updateExerciseMeta(ex.id, { notes: e.target.value })}
+                        onBlur={() => void persistExerciseMeta(ex.id)}
+                        placeholder="Anotações (salvam ao sair do campo)"
+                        rows={3}
+                        className="resize-y rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm font-normal text-[var(--foreground)] outline-none ring-[var(--accent)] focus:ring-2"
+                      />
+                    </label>
+                  </div>
+                </div>
               </AppCard>
             </li>
           ))}

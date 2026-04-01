@@ -14,6 +14,8 @@ export type ExerciseRow = {
   name: string;
   sets: number;
   reps: string;
+  weight: string;
+  notes: string;
 };
 
 export type ExerciseLogRow = {
@@ -29,4 +31,6 @@ export type ExerciseDraft = {
   name: string;
   sets: number;
   reps: string;
+  weight: string;
+  notes: string;
 };

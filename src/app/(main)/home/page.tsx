@@ -1,8 +1,10 @@
 "use client";
 
+import type { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AppCard } from "@/components/app-card";
+import { HomeLanding } from "@/components/home-landing";
 import { PageHeader } from "@/components/page-header";
 import { PrimaryButton } from "@/components/primary-button";
 import { WEEKDAY_LABELS_PT } from "@/lib/constants/weekdays";
@@ -12,20 +14,27 @@ import { getLocalDayOfWeekKey } from "@/lib/utils/local-date";
 
 export default function HomePage() {
   const router = useRouter();
+  const [authUser, setAuthUser] = useState<User | null | undefined>(undefined);
   const [workout, setWorkout] = useState<WorkoutRow | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [workoutLoading, setWorkoutLoading] = useState<boolean>(false);
+  const [dbMissingTables, setDbMissingTables] = useState<boolean>(false);
   const todayKey = getLocalDayOfWeekKey();
   const todayLabel: string = WEEKDAY_LABELS_PT[todayKey];
   const loadToday = useCallback(async () => {
-    setIsLoading(true);
     const supabase = getSupabaseBrowserClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      setIsLoading(false);
+      setAuthUser(null);
+      setWorkout(null);
+      setDbMissingTables(false);
+      setWorkoutLoading(false);
       return;
     }
+    setAuthUser(user);
+    setWorkoutLoading(true);
+    setDbMissingTables(false);
     const { data, error } = await supabase
       .from("workouts")
       .select("id,user_id,name,day_of_week,created_at")
@@ -33,12 +42,19 @@ export default function HomePage() {
       .eq("day_of_week", todayKey)
       .maybeSingle();
     if (error) {
-      console.error(error);
+      const isMissingTable: boolean =
+        error.code === "PGRST205" ||
+        (typeof error.message === "string" &&
+          error.message.includes("schema cache"));
+      setDbMissingTables(isMissingTable);
+      if (!isMissingTable) {
+        console.error(error);
+      }
       setWorkout(null);
     } else {
       setWorkout(data as WorkoutRow | null);
     }
-    setIsLoading(false);
+    setWorkoutLoading(false);
   }, [todayKey]);
   useEffect(() => {
     const timeoutId: number = window.setTimeout(() => {
@@ -49,8 +65,30 @@ export default function HomePage() {
   async function handleSignOut() {
     const supabase = getSupabaseBrowserClient();
     await supabase.auth.signOut();
-    router.replace("/login");
+    setAuthUser(null);
+    setWorkout(null);
+    router.replace("/home");
     router.refresh();
+  }
+  if (authUser === undefined) {
+    return (
+      <>
+        <PageHeader title="Treino Fácil" subtitle="Carregando…" />
+        <AppCard>
+          <p className="text-[var(--muted-foreground)]">Carregando…</p>
+        </AppCard>
+      </>
+    );
+  }
+  if (authUser === null) {
+    return (
+      <>
+        <PageHeader title="Bem-vindo" subtitle="Treinos simples no celular" />
+        <AppCard>
+          <HomeLanding />
+        </AppCard>
+      </>
+    );
   }
   return (
     <>
@@ -67,7 +105,21 @@ export default function HomePage() {
           </button>
         }
       />
-      {isLoading ? (
+      {dbMissingTables ? (
+        <AppCard>
+          <h2 className="text-lg font-semibold">Banco ainda não configurado</h2>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--muted-foreground)]">
+            O projeto Supabase ainda não tem as tabelas do app (erro PGRST205). No painel do
+            Supabase, abra <strong>SQL Editor</strong>, cole o conteúdo do arquivo{" "}
+            <code className="rounded bg-[var(--muted)] px-1 py-0.5 text-xs">supabase/schema.sql</code>{" "}
+            do repositório e execute. Se o banco já existia antes, rode também{" "}
+            <code className="rounded bg-[var(--muted)] px-1 py-0.5 text-xs">
+              supabase/migrations/002_exercise_weight_notes.sql
+            </code>
+            . Depois atualize esta página.
+          </p>
+        </AppCard>
+      ) : workoutLoading ? (
         <AppCard>
           <p className="text-[var(--muted-foreground)]">Carregando…</p>
         </AppCard>

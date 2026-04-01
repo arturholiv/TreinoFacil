@@ -1,10 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSupabasePublicConfig } from "@/lib/supabase/public-env";
 
 const AUTH_PATHS: readonly string[] = ["/login", "/register"];
 
 function isProtectedPath(pathname: string): boolean {
-  if (pathname === "/home" || pathname === "/workouts" || pathname === "/create-workout") {
+  if (pathname === "/workouts" || pathname === "/create-workout") {
     return true;
   }
   if (pathname.startsWith("/workout/")) {
@@ -25,12 +26,16 @@ function isAuthPath(pathname: string): boolean {
  */
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let supabaseResponse: NextResponse = NextResponse.next({ request });
-  const url: string | undefined = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey: string | undefined = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) {
+  let url: string;
+  let apiKey: string;
+  try {
+    const config = getSupabasePublicConfig();
+    url = config.url;
+    apiKey = config.apiKey;
+  } catch {
     return supabaseResponse;
   }
-  const supabase = createServerClient(url, anonKey, {
+  const supabase = createServerClient(url, apiKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -59,8 +64,15 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     return NextResponse.redirect(redirectUrl);
   }
   if (pathname === "/") {
-    const target: string = user ? "/home" : "/login";
-    return NextResponse.redirect(new URL(target, request.url));
+    const oauthCode: string | null = request.nextUrl.searchParams.get("code");
+    if (oauthCode) {
+      const callbackUrl = new URL("/auth/callback", request.url);
+      request.nextUrl.searchParams.forEach((value, key) => {
+        callbackUrl.searchParams.set(key, value);
+      });
+      return NextResponse.redirect(callbackUrl);
+    }
+    return NextResponse.redirect(new URL("/home", request.url));
   }
   return supabaseResponse;
 }

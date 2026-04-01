@@ -12,7 +12,13 @@ type WorkoutEditorProps = {
   editingWorkoutId?: string;
 };
 
-const DEFAULT_EXERCISE: ExerciseDraft = { name: "", sets: 3, reps: "10" };
+const DEFAULT_EXERCISE: ExerciseDraft = {
+  name: "",
+  sets: 3,
+  reps: "10",
+  weight: "",
+  notes: "",
+};
 
 export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
   const router = useRouter();
@@ -50,7 +56,7 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
     setDayOfWeek(w.day_of_week as DayOfWeekKey);
     const { data: exRows, error: exError } = await supabase
       .from("exercises")
-      .select("id,name,sets,reps")
+      .select("id,name,sets,reps,weight,notes")
       .eq("workout_id", editingWorkoutId)
       .order("id", { ascending: true });
     if (exError) {
@@ -65,6 +71,8 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
           name: row.name as string,
           sets: row.sets as number,
           reps: String(row.reps),
+          weight: String(row.weight ?? ""),
+          notes: String(row.notes ?? ""),
         })),
       );
     } else {
@@ -98,6 +106,8 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
         name: row.name.trim(),
         sets: Math.max(1, Number(row.sets) || 1),
         reps: row.reps.trim() || "10",
+        weight: row.weight.trim(),
+        notes: row.notes.trim(),
       }))
       .filter((row) => row.name.length > 0);
     if (!name.trim()) {
@@ -144,6 +154,8 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
           name: row.name,
           sets: row.sets,
           reps: row.reps,
+          weight: row.weight,
+          notes: row.notes,
         })),
       );
       if (iError) {
@@ -173,6 +185,8 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
           name: row.name,
           sets: row.sets,
           reps: row.reps,
+          weight: row.weight,
+          notes: row.notes,
         })),
       );
       if (iError) {
@@ -277,6 +291,25 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
                   />
                 </label>
               </div>
+              <label className="mt-3 flex flex-col gap-2 text-sm font-medium">
+                Peso (carga)
+                <input
+                  value={row.weight}
+                  onChange={(e) => updateExerciseRow(index, { weight: e.target.value })}
+                  placeholder="Ex.: 20 kg, 10+10 kg cada lado"
+                  className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-base outline-none ring-[var(--accent)] focus:ring-2"
+                />
+              </label>
+              <label className="mt-3 flex flex-col gap-2 text-sm font-medium">
+                Notas
+                <textarea
+                  value={row.notes}
+                  onChange={(e) => updateExerciseRow(index, { notes: e.target.value })}
+                  placeholder="Técnica, progressão, lesão…"
+                  rows={3}
+                  className="resize-y rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-base outline-none ring-[var(--accent)] focus:ring-2"
+                />
+              </label>
             </li>
           ))}
         </ul>

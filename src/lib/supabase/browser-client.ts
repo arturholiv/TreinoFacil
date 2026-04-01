@@ -1,20 +1,30 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSupabasePublicConfig } from "@/lib/supabase/public-env";
 
 /**
  * Browser Supabase client (singleton per tab).
  */
 let browserClient: SupabaseClient | undefined;
+let cachedConfigSignature: string | undefined;
 
 export function getSupabaseBrowserClient(): SupabaseClient {
-  if (browserClient) {
+  let url: string;
+  let apiKey: string;
+  try {
+    const config = getSupabasePublicConfig();
+    url = config.url;
+    apiKey = config.apiKey;
+  } catch (err) {
+    browserClient = undefined;
+    cachedConfigSignature = undefined;
+    throw err;
+  }
+  const signature: string = `${url}\0${apiKey}`;
+  if (browserClient && cachedConfigSignature === signature) {
     return browserClient;
   }
-  const url: string | undefined = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey: string | undefined = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
-  }
-  browserClient = createBrowserClient(url, anonKey);
+  browserClient = createBrowserClient(url, apiKey);
+  cachedConfigSignature = signature;
   return browserClient;
 }
