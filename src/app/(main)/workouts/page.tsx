@@ -4,10 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AppCard } from "@/components/app-card";
 import { PageHeader } from "@/components/page-header";
-import {
-  DAY_OF_WEEK_KEYS,
-  WEEKDAY_LABELS_PT,
-} from "@/lib/constants/weekdays";
+import { DAY_OF_WEEK_KEYS, WEEKDAY_SELECT_OPTIONS } from "@/lib/constants/weekdays";
 import type { DayOfWeekKey } from "@/lib/constants/weekdays";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import type { WorkoutRow } from "@/lib/types/workout-types";
@@ -15,6 +12,7 @@ import type { WorkoutRow } from "@/lib/types/workout-types";
 export default function WorkoutsListPage() {
   const [rows, setRows] = useState<WorkoutRow[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [updatingDayId, setUpdatingDayId] = useState<string | null>(null);
   const loadList = useCallback(async () => {
     setIsLoading(true);
     const supabase = getSupabaseBrowserClient();
@@ -68,9 +66,43 @@ export default function WorkoutsListPage() {
     }
     void loadList();
   }
+  async function handleDayChange(workoutId: string, nextDay: DayOfWeekKey) {
+    const current: WorkoutRow | undefined = rows.find((r) => r.id === workoutId);
+    if (!current || current.day_of_week === nextDay) {
+      return;
+    }
+    setUpdatingDayId(workoutId);
+    const supabase = getSupabaseBrowserClient();
+    const { error } = await supabase
+      .from("workouts")
+      .update({ day_of_week: nextDay })
+      .eq("id", workoutId);
+    setUpdatingDayId(null);
+    if (error) {
+      console.error(error);
+      window.alert("Não foi possível atualizar o dia. Tente de novo.");
+      return;
+    }
+    setRows((prev) => {
+      const nextRows: WorkoutRow[] = prev.map((r) =>
+        r.id === workoutId ? { ...r, day_of_week: nextDay } : r,
+      );
+      return [...nextRows].sort((a, b) => {
+        const ai: number = DAY_OF_WEEK_KEYS.indexOf(a.day_of_week as DayOfWeekKey);
+        const bi: number = DAY_OF_WEEK_KEYS.indexOf(b.day_of_week as DayOfWeekKey);
+        if (ai !== bi) {
+          return ai - bi;
+        }
+        return a.name.localeCompare(b.name, "pt-BR");
+      });
+    });
+  }
   return (
     <>
-      <PageHeader title="Meus treinos" subtitle="Edite, exclua ou abra o treino do dia na home." />
+      <PageHeader
+        title="Meus treinos"
+        subtitle="Troque o dia da semana pelo menu abaixo, ou edite o treino completo."
+      />
       {isLoading ? (
         <AppCard>
           <p className="text-[var(--muted-foreground)]">Carregando…</p>
@@ -89,14 +121,32 @@ export default function WorkoutsListPage() {
         <ul className="flex flex-col gap-3">
           {rows.map((w) => {
             const dayKey = w.day_of_week as DayOfWeekKey;
-            const dayLabel: string = WEEKDAY_LABELS_PT[dayKey];
             return (
               <li key={w.id}>
                 <AppCard className="!py-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <h2 className="text-lg font-semibold">{w.name}</h2>
-                      <p className="mt-1 text-sm text-[var(--muted-foreground)]">{dayLabel}</p>
+                      <label className="mt-3 flex flex-col gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
+                        Dia da semana
+                        <select
+                          value={dayKey}
+                          disabled={updatingDayId === w.id}
+                          onChange={(e) =>
+                            void handleDayChange(w.id, e.target.value as DayOfWeekKey)
+                          }
+                          className="min-h-11 max-w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm font-normal text-[var(--foreground)] outline-none ring-[var(--accent)] focus:ring-2 disabled:opacity-60 sm:max-w-xs"
+                        >
+                          {WEEKDAY_SELECT_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {updatingDayId === w.id ? (
+                        <p className="mt-1 text-xs text-[var(--muted-foreground)]">Salvando…</p>
+                      ) : null}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Link

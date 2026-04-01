@@ -1,6 +1,7 @@
 "use client";
 
 import type { User } from "@supabase/supabase-js";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AppCard } from "@/components/app-card";
@@ -40,6 +41,8 @@ export default function HomePage() {
       .select("id,user_id,name,day_of_week,created_at")
       .eq("user_id", user.id)
       .eq("day_of_week", todayKey)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
     if (error) {
       const isMissingTable: boolean =
@@ -139,6 +142,14 @@ export default function HomePage() {
           >
             Ver treino
           </PrimaryButton>
+          <p className="mt-4 text-center text-sm text-[var(--muted-foreground)]">
+            <Link
+              href="/workouts"
+              className="font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+            >
+              Trocar o dia deste treino
+            </Link>
+          </p>
         </AppCard>
       ) : (
         <AppCard>
