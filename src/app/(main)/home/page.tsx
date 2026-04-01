@@ -11,7 +11,9 @@ import { PrimaryButton } from "@/components/primary-button";
 import { WEEKDAY_LABELS_PT } from "@/lib/constants/weekdays";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import type { WorkoutRow } from "@/lib/types/workout-types";
-import { getLocalDayOfWeekKey } from "@/lib/utils/local-date";
+import { getLocalDateYmd, getLocalDayOfWeekKey } from "@/lib/utils/local-date";
+
+type CheckinHomeState = "idle" | "hidden" | { hasCheckin: boolean };
 
 export default function HomePage() {
   const router = useRouter();
@@ -19,6 +21,8 @@ export default function HomePage() {
   const [workout, setWorkout] = useState<WorkoutRow | null>(null);
   const [workoutLoading, setWorkoutLoading] = useState<boolean>(false);
   const [dbMissingTables, setDbMissingTables] = useState<boolean>(false);
+  const [checkinHome, setCheckinHome] = useState<CheckinHomeState>("idle");
+  const [checkinSaving, setCheckinSaving] = useState<boolean>(false);
   const todayKey = getLocalDayOfWeekKey();
   const todayLabel: string = WEEKDAY_LABELS_PT[todayKey];
   const loadToday = useCallback(async () => {
@@ -31,6 +35,7 @@ export default function HomePage() {
       setWorkout(null);
       setDbMissingTables(false);
       setWorkoutLoading(false);
+      setCheckinHome("hidden");
       return;
     }
     setAuthUser(user);
@@ -58,6 +63,23 @@ export default function HomePage() {
       setWorkout(data as WorkoutRow | null);
     }
     setWorkoutLoading(false);
+    const todayYmd: string = getLocalDateYmd();
+    const { data: cinRow, error: cinError } = await supabase
+      .from("daily_checkins")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("checkin_date", todayYmd)
+      .maybeSingle();
+    if (cinError) {
+      const missingCheckinTable: boolean =
+        cinError.code === "PGRST205" ||
+        (typeof cinError.message === "string" &&
+          (cinError.message.includes("schema cache") ||
+            cinError.message.includes("daily_checkins")));
+      setCheckinHome(missingCheckinTable ? "hidden" : { hasCheckin: false });
+    } else {
+      setCheckinHome({ hasCheckin: Boolean(cinRow) });
+    }
   }, [todayKey]);
   useEffect(() => {
     const timeoutId: number = window.setTimeout(() => {
@@ -70,8 +92,32 @@ export default function HomePage() {
     await supabase.auth.signOut();
     setAuthUser(null);
     setWorkout(null);
+    setCheckinHome("hidden");
     router.replace("/home");
     router.refresh();
+  }
+  async function handleQuickCheckin() {
+    if (typeof checkinHome === "object" && checkinHome.hasCheckin) {
+      return;
+    }
+    setCheckinSaving(true);
+    const supabase = getSupabaseBrowserClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setCheckinSaving(false);
+      return;
+    }
+    const todayYmd: string = getLocalDateYmd();
+    const { error } = await supabase.from("daily_checkins").insert({
+      user_id: user.id,
+      checkin_date: todayYmd,
+    });
+    setCheckinSaving(false);
+    if (!error || error.code === "23505") {
+      setCheckinHome({ hasCheckin: true });
+    }
   }
   if (authUser === undefined) {
     return (
@@ -108,6 +154,40 @@ export default function HomePage() {
           </button>
         }
       />
+      {checkinHome !== "idle" && checkinHome !== "hidden" ? (
+        <AppCard className="mb-4 !py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--foreground)]">Check-in de hoje</p>
+              <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                Registro diário — veja o calendário em Hábito.
+              </p>
+            </div>
+            <div className="flex flex-col items-stretch gap-2 sm:items-end">
+              {checkinHome.hasCheckin ? (
+                <span className="text-center text-sm font-semibold text-emerald-600 dark:text-emerald-400 sm:text-right">
+                  Feito hoje
+                </span>
+              ) : (
+                <PrimaryButton
+                  type="button"
+                  disabled={checkinSaving}
+                  className="!min-h-11 sm:w-auto sm:min-w-[9rem]"
+                  onClick={() => void handleQuickCheckin()}
+                >
+                  {checkinSaving ? "Salvando…" : "Fazer check-in"}
+                </PrimaryButton>
+              )}
+              <Link
+                href="/checkin"
+                className="text-center text-xs font-semibold text-[var(--accent)] underline-offset-2 hover:underline sm:text-right"
+              >
+                Abrir calendário
+              </Link>
+            </div>
+          </div>
+        </AppCard>
+      ) : null}
       {dbMissingTables ? (
         <AppCard>
           <h2 className="text-lg font-semibold">Banco ainda não configurado</h2>
@@ -118,6 +198,10 @@ export default function HomePage() {
             do repositório e execute. Se o banco já existia antes, rode também{" "}
             <code className="rounded bg-[var(--muted)] px-1 py-0.5 text-xs">
               supabase/migrations/002_exercise_weight_notes.sql
+            </code>{" "}
+            e, para check-in diário,{" "}
+            <code className="rounded bg-[var(--muted)] px-1 py-0.5 text-xs">
+              supabase/migrations/003_daily_checkins.sql
             </code>
             . Depois atualize esta página.
           </p>
@@ -164,6 +248,14 @@ export default function HomePage() {
           >
             Criar treino
           </PrimaryButton>
+          <p className="mt-4 text-center text-sm text-[var(--muted-foreground)]">
+            <Link
+              href="/gerar-treinos"
+              className="font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+            >
+              Sem ideia? Gerar treinos com IA
+            </Link>
+          </p>
         </AppCard>
       )}
     </>

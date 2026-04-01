@@ -246,7 +246,7 @@ export default function WorkoutDetailPage() {
                         value={ex.notes}
                         onChange={(e) => updateExerciseMeta(ex.id, { notes: e.target.value })}
                         onBlur={() => void persistExerciseMeta(ex.id)}
-                        placeholder="Anotações (salvam ao sair do campo)"
+                        placeholder="Anotações"
                         rows={3}
                         className="resize-y rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm font-normal text-[var(--foreground)] outline-none ring-[var(--accent)] focus:ring-2"
                       />

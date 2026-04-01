@@ -12,6 +12,7 @@ type AppShellProps = {
 const NAV_ITEMS: { href: string; label: string }[] = [
   { href: "/home", label: "Início" },
   { href: "/workouts", label: "Treinos" },
+  { href: "/checkin", label: "Hábito" },
   { href: "/create-workout", label: "Novo" },
 ];
 
@@ -55,19 +56,23 @@ export function AppShell({ children }: AppShellProps) {
                     pathname.startsWith("/edit-workout/")
                   );
                 }
-                if (item.href === "/create-workout") {
-                  return (
-                    pathname === "/create-workout" ||
-                    pathname.startsWith("/edit-workout/")
-                  );
+                if (item.href === "/checkin") {
+                  return pathname === "/checkin";
                 }
+              if (item.href === "/create-workout") {
+                return (
+                  pathname === "/create-workout" ||
+                  pathname === "/gerar-treinos" ||
+                  pathname.startsWith("/edit-workout/")
+                );
+              }
                 return pathname === item.href;
               })();
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex min-h-12 min-w-[4.5rem] flex-1 items-center justify-center rounded-xl text-sm font-medium transition ${
+                  className={`flex min-h-12 min-w-0 flex-1 items-center justify-center rounded-xl px-1 text-xs font-medium transition sm:text-sm ${
                     isActive
                       ? "bg-[var(--muted)] text-[var(--foreground)]"
                       : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]/60"

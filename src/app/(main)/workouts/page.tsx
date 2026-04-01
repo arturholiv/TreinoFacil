@@ -103,6 +103,20 @@ export default function WorkoutsListPage() {
         title="Meus treinos"
         subtitle="Troque o dia da semana pelo menu abaixo, ou edite o treino completo."
       />
+      <AppCard className="mb-4 !border-dashed !py-4">
+        <p className="text-sm font-semibold text-[var(--foreground)]">Sem ideia de treinos?</p>
+        <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+          A <strong>IA do Treino Fácil</strong> monta para você divisões <strong>ABC</strong>,{" "}
+          <strong>ABCD</strong> ou <strong>ABCDE</strong> com dias da semana, exercícios e séries.
+          Você pode editar tudo depois.
+        </p>
+        <Link
+          href="/gerar-treinos"
+          className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl border-2 border-[var(--accent)] bg-transparent px-3 text-center text-sm font-semibold leading-tight text-[var(--accent)]"
+        >
+          Gerar meus treinos com inteligência artificial
+        </Link>
+      </AppCard>
       {isLoading ? (
         <AppCard>
           <p className="text-[var(--muted-foreground)]">Carregando…</p>
@@ -115,6 +129,12 @@ export default function WorkoutsListPage() {
             className="mt-4 inline-block text-sm font-semibold text-[var(--accent)]"
           >
             Criar primeiro treino
+          </Link>
+          <Link
+            href="/gerar-treinos"
+            className="mt-3 block text-sm font-semibold text-[var(--accent)] underline-offset-2 hover:underline"
+          >
+            Ou deixar a IA gerar (ABC, ABCD ou ABCDE)
           </Link>
         </AppCard>
       ) : (

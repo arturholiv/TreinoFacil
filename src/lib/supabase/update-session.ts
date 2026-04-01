@@ -5,7 +5,12 @@ import { getSupabasePublicConfig } from "@/lib/supabase/public-env";
 const AUTH_PATHS: readonly string[] = ["/login", "/register"];
 
 function isProtectedPath(pathname: string): boolean {
-  if (pathname === "/workouts" || pathname === "/create-workout") {
+  if (
+    pathname === "/workouts" ||
+    pathname === "/create-workout" ||
+    pathname === "/gerar-treinos" ||
+    pathname === "/checkin"
+  ) {
     return true;
   }
   if (pathname.startsWith("/workout/")) {
