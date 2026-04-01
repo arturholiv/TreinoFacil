@@ -87,7 +87,7 @@ export default function GerarTreinosPage() {
     <>
       <PageHeader
         title="Treinos com IA"
-        subtitle="A assistente monta divisões ABC, ABCD ou ABCDE com dias, exercícios e séries para você."
+        subtitle="Escolha ABC, ABCD, ABCDE ou o programa Leangains (7 dias, com postura e alongamentos)."
         action={
           <Link
             href="/workouts"
@@ -106,8 +106,8 @@ export default function GerarTreinosPage() {
           &quot;Treinos&quot; ou &quot;Editar treino&quot;. Tudo fica só no seu perfil.
         </p>
         <p className="mt-3 text-xs leading-relaxed text-[var(--muted-foreground)]">
-          As sugestões seguem programas clássicos de musculação (ABC, ABCD, ABCDE) usados em
-          academias.
+          Inclui o programa <strong>Leangains</strong> (foco estético, ombro lateral, costas, peito
+          superior, posterior e postura) além das divisões ABC tradicionais.
         </p>
       </AppCard>
       <AppCard className="mb-6 flex flex-col gap-5">
@@ -129,6 +129,11 @@ export default function GerarTreinosPage() {
                 {
                   value: "ABCDE" as SplitKind,
                   label: "ABCDE — 5 dias (foco estético, 1 grupo por dia + braços+abdômen)",
+                },
+                {
+                  value: "LEANGAINS" as SplitKind,
+                  label:
+                    "Leangains — 7 dias (seg–dom): musculação + postura/alongamentos; domingo recuperação leve",
                 },
               ] as const
             ).map((opt) => (
@@ -179,6 +184,13 @@ export default function GerarTreinosPage() {
               ))}
             </div>
           </fieldset>
+        ) : splitKind === "LEANGAINS" ? (
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Leangains gera <strong>sete treinos</strong>: segunda a sábado com fichas detalhadas +
+            postura; <strong>domingo</strong> só recuperação leve (caminhada/bike, alongamentos e
+            mobilidade). Cardio por dia está nas notas do último bloco ou em &quot;Cardio
+            (recomendado)&quot; quando aplicável.
+          </p>
         ) : (
           <p className="text-sm text-[var(--muted-foreground)]">
             {splitKind === "ABCD"
@@ -189,10 +201,10 @@ export default function GerarTreinosPage() {
         <div>
           <h3 className="text-sm font-semibold text-[var(--foreground)]">Prévia do calendário</h3>
           <ul className="mt-2 flex flex-col gap-2 text-sm text-[var(--muted-foreground)]">
-            {planPreview.map((row) => {
+            {planPreview.map((row, idx) => {
               const dayLabel: string = WEEKDAY_LABELS_PT[row.dayOfWeek as DayOfWeekKey];
               return (
-                <li key={`${row.dayOfWeek}-${row.definition.letter}`} className="flex gap-2">
+                <li key={`${row.dayOfWeek}-${row.definition.letter}-${idx}`} className="flex flex-wrap gap-x-2 gap-y-0.5">
                   <span className="shrink-0 font-medium text-[var(--foreground)]">{dayLabel}</span>
                   <span>{workoutDisplayName(row.definition)}</span>
                   <span className="text-xs">
@@ -221,7 +233,7 @@ export default function GerarTreinosPage() {
       </AppCard>
       <details className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 text-sm">
         <summary className="cursor-pointer font-medium text-[var(--foreground)]">
-          Ver resumo dos exercícios por letra
+          Ver resumo dos exercícios por programa
         </summary>
         <div className="mt-4 flex flex-col gap-4 text-[var(--muted-foreground)]">
           {(Object.keys(SPLIT_DEFINITIONS) as SplitKind[]).map((k) => (
@@ -229,9 +241,9 @@ export default function GerarTreinosPage() {
               <p className="font-semibold text-[var(--foreground)]">{k}</p>
               <ul className="mt-2 space-y-3">
                 {SPLIT_DEFINITIONS[k].map((d) => (
-                  <li key={d.letter}>
+                  <li key={`${k}-${d.letter}-${d.title}`}>
                     <span className="text-[var(--foreground)]">
-                      {d.letter} — {d.title}
+                      {d.workoutName ?? `${d.letter} — ${d.title}`}
                     </span>
                     <ul className="ml-3 mt-1 list-disc space-y-0.5">
                       {d.exercises.map((ex) => (
