@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AppCard } from "@/components/app-card";
+import { ClearWorkoutsModal } from "@/components/clear-workouts-modal";
 import { PageHeader } from "@/components/page-header";
 import { DAY_OF_WEEK_KEYS, WEEKDAY_SELECT_OPTIONS } from "@/lib/constants/weekdays";
 import type { DayOfWeekKey } from "@/lib/constants/weekdays";
@@ -13,6 +14,10 @@ export default function WorkoutsListPage() {
   const [rows, setRows] = useState<WorkoutRow[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [updatingDayId, setUpdatingDayId] = useState<string | null>(null);
+  const [isClearingAll, setIsClearingAll] = useState<boolean>(false);
+  const [clearAllModalOpen, setClearAllModalOpen] = useState<boolean>(false);
+  const [clearAllModalKey, setClearAllModalKey] = useState<number>(0);
+  const [clearAllError, setClearAllError] = useState<string>("");
   const loadList = useCallback(async () => {
     setIsLoading(true);
     const supabase = getSupabaseBrowserClient();
@@ -65,6 +70,30 @@ export default function WorkoutsListPage() {
       return;
     }
     void loadList();
+  }
+  async function executeClearAllWorkouts() {
+    if (rows.length === 0) {
+      return;
+    }
+    setClearAllError("");
+    setIsClearingAll(true);
+    const supabase = getSupabaseBrowserClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setIsClearingAll(false);
+      return;
+    }
+    const { error } = await supabase.from("workouts").delete().eq("user_id", user.id);
+    setIsClearingAll(false);
+    if (error) {
+      console.error(error);
+      setClearAllError(error.message ?? "Não foi possível limpar os treinos.");
+      return;
+    }
+    setClearAllModalOpen(false);
+    setRows([]);
   }
   async function handleDayChange(workoutId: string, nextDay: DayOfWeekKey) {
     const current: WorkoutRow | undefined = rows.find((r) => r.id === workoutId);
@@ -196,6 +225,41 @@ export default function WorkoutsListPage() {
           })}
         </ul>
       )}
+      {!isLoading && rows.length > 0 ? (
+        <AppCard className="mt-6 border-red-200/80 bg-red-50/40 dark:border-red-900/60 dark:bg-red-950/20">
+          <p className="text-sm font-semibold text-red-900 dark:text-red-200">Zona de risco</p>
+          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+            Remove de uma vez todos os treinos salvos, os exercícios de cada um e os registros de
+            conclusão ligados a esses exercícios.
+          </p>
+          <button
+            type="button"
+            disabled={isClearingAll}
+            onClick={() => {
+              setClearAllError("");
+              setClearAllModalKey((k) => k + 1);
+              setClearAllModalOpen(true);
+            }}
+            className="mt-4 w-full rounded-xl border border-red-300 bg-white px-4 py-3 text-sm font-semibold text-red-800 shadow-sm transition enabled:hover:bg-red-50 disabled:opacity-60 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200 dark:enabled:hover:bg-red-950/70"
+          >
+            Limpar todos os meus treinos
+          </button>
+        </AppCard>
+      ) : null}
+      <ClearWorkoutsModal
+        key={clearAllModalKey}
+        isOpen={clearAllModalOpen}
+        workoutCount={rows.length}
+        isSubmitting={isClearingAll}
+        errorMessage={clearAllError}
+        onClose={() => {
+          if (!isClearingAll) {
+            setClearAllModalOpen(false);
+            setClearAllError("");
+          }
+        }}
+        onConfirm={() => void executeClearAllWorkouts()}
+      />
     </>
   );
 }

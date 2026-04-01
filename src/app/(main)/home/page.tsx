@@ -9,8 +9,9 @@ import { HomeLanding } from "@/components/home-landing";
 import { PageHeader } from "@/components/page-header";
 import { PrimaryButton } from "@/components/primary-button";
 import { WEEKDAY_LABELS_PT } from "@/lib/constants/weekdays";
+import { ExerciseIllustration } from "@/components/exercise-illustration";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import type { WorkoutRow } from "@/lib/types/workout-types";
+import type { ExerciseRow, WorkoutRow } from "@/lib/types/workout-types";
 import { getLocalDateYmd, getLocalDayOfWeekKey } from "@/lib/utils/local-date";
 
 type CheckinHomeState = "idle" | "hidden" | { hasCheckin: boolean };
@@ -19,6 +20,9 @@ export default function HomePage() {
   const router = useRouter();
   const [authUser, setAuthUser] = useState<User | null | undefined>(undefined);
   const [workout, setWorkout] = useState<WorkoutRow | null>(null);
+  const [todayExercises, setTodayExercises] = useState<
+    Pick<ExerciseRow, "id" | "name" | "sets" | "reps">[]
+  >([]);
   const [workoutLoading, setWorkoutLoading] = useState<boolean>(false);
   const [dbMissingTables, setDbMissingTables] = useState<boolean>(false);
   const [checkinHome, setCheckinHome] = useState<CheckinHomeState>("idle");
@@ -33,6 +37,7 @@ export default function HomePage() {
     if (!user) {
       setAuthUser(null);
       setWorkout(null);
+      setTodayExercises([]);
       setDbMissingTables(false);
       setWorkoutLoading(false);
       setCheckinHome("hidden");
@@ -59,8 +64,25 @@ export default function HomePage() {
         console.error(error);
       }
       setWorkout(null);
+      setTodayExercises([]);
     } else {
-      setWorkout(data as WorkoutRow | null);
+      const w: WorkoutRow | null = data as WorkoutRow | null;
+      setWorkout(w);
+      if (w) {
+        const { data: exRows, error: exError } = await supabase
+          .from("exercises")
+          .select("id,name,sets,reps")
+          .eq("workout_id", w.id)
+          .order("id", { ascending: true });
+        if (exError) {
+          console.error(exError);
+          setTodayExercises([]);
+        } else {
+          setTodayExercises((exRows ?? []) as Pick<ExerciseRow, "id" | "name" | "sets" | "reps">[]);
+        }
+      } else {
+        setTodayExercises([]);
+      }
     }
     setWorkoutLoading(false);
     const todayYmd: string = getLocalDateYmd();
@@ -219,12 +241,33 @@ export default function HomePage() {
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">
             Programado para {todayLabel}.
           </p>
+          {todayExercises.length > 0 ? (
+            <div className="mt-5">
+              <p className="text-xs font-semibold text-[var(--foreground)]">Lista de exercícios</p>
+              <ul className="mt-3 flex flex-col gap-3">
+                {todayExercises.map((ex) => (
+                  <li
+                    key={ex.id}
+                    className="flex items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--input-bg)]/50 p-3"
+                  >
+                    <ExerciseIllustration exerciseName={ex.name} variant="list" />
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <p className="text-sm font-semibold text-[var(--foreground)]">{ex.name}</p>
+                      <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                        {ex.sets}×{ex.reps}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <PrimaryButton
             type="button"
             className="mt-6"
             onClick={() => router.push(`/workout/${workout.id}`)}
           >
-            Ver treino
+            Abrir treino completo
           </PrimaryButton>
           <p className="mt-4 text-center text-sm text-[var(--muted-foreground)]">
             <Link

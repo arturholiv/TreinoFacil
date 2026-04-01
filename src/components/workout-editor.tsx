@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { ExerciseIllustration } from "@/components/exercise-illustration";
 import { PrimaryButton } from "@/components/primary-button";
 import type { DayOfWeekKey } from "@/lib/constants/weekdays";
 import { WEEKDAY_SELECT_OPTIONS } from "@/lib/constants/weekdays";
@@ -259,57 +260,66 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
                   </button>
                 ) : null}
               </div>
-              <label className="mt-3 flex flex-col gap-2 text-sm font-medium">
-                Nome
-                <input
-                  value={row.name}
-                  onChange={(e) => updateExerciseRow(index, { name: e.target.value })}
-                  placeholder="Ex.: Supino reto"
-                  className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-base outline-none ring-[var(--accent)] focus:ring-2"
+              <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
+                <ExerciseIllustration
+                  exerciseName={row.name.trim().length >= 1 ? row.name : " "}
+                  variant="list"
+                  className="mx-auto sm:mx-0"
                 />
-              </label>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <label className="flex flex-col gap-2 text-sm font-medium">
-                  Séries
-                  <input
-                    type="number"
-                    min={1}
-                    value={row.sets}
-                    onChange={(e) =>
-                      updateExerciseRow(index, { sets: Math.max(1, Number(e.target.value) || 1) })
-                    }
-                    className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-base outline-none ring-[var(--accent)] focus:ring-2"
-                  />
-                </label>
-                <label className="flex flex-col gap-2 text-sm font-medium">
-                  Reps
-                  <input
-                    value={row.reps}
-                    onChange={(e) => updateExerciseRow(index, { reps: e.target.value })}
-                    placeholder="10 ou 8-12"
-                    className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-base outline-none ring-[var(--accent)] focus:ring-2"
-                  />
-                </label>
+                <div className="min-w-0 flex-1 flex flex-col gap-3">
+                  <label className="flex flex-col gap-2 text-sm font-medium">
+                    Nome
+                    <input
+                      value={row.name}
+                      onChange={(e) => updateExerciseRow(index, { name: e.target.value })}
+                      placeholder="Ex.: Supino reto"
+                      className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-base outline-none ring-[var(--accent)] focus:ring-2"
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex flex-col gap-2 text-sm font-medium">
+                      Séries
+                      <input
+                        type="number"
+                        min={1}
+                        value={row.sets}
+                        onChange={(e) =>
+                          updateExerciseRow(index, { sets: Math.max(1, Number(e.target.value) || 1) })
+                        }
+                        className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-base outline-none ring-[var(--accent)] focus:ring-2"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-2 text-sm font-medium">
+                      Reps
+                      <input
+                        value={row.reps}
+                        onChange={(e) => updateExerciseRow(index, { reps: e.target.value })}
+                        placeholder="10 ou 8-12"
+                        className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-base outline-none ring-[var(--accent)] focus:ring-2"
+                      />
+                    </label>
+                  </div>
+                  <label className="flex flex-col gap-2 text-sm font-medium">
+                    Peso (carga)
+                    <input
+                      value={row.weight}
+                      onChange={(e) => updateExerciseRow(index, { weight: e.target.value })}
+                      placeholder="Ex.: 20 kg, 10+10 kg cada lado"
+                      className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-base outline-none ring-[var(--accent)] focus:ring-2"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-2 text-sm font-medium">
+                    Notas
+                    <textarea
+                      value={row.notes}
+                      onChange={(e) => updateExerciseRow(index, { notes: e.target.value })}
+                      placeholder="Técnica, progressão, lesão…"
+                      rows={3}
+                      className="resize-y rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-base outline-none ring-[var(--accent)] focus:ring-2"
+                    />
+                  </label>
+                </div>
               </div>
-              <label className="mt-3 flex flex-col gap-2 text-sm font-medium">
-                Peso (carga)
-                <input
-                  value={row.weight}
-                  onChange={(e) => updateExerciseRow(index, { weight: e.target.value })}
-                  placeholder="Ex.: 20 kg, 10+10 kg cada lado"
-                  className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-base outline-none ring-[var(--accent)] focus:ring-2"
-                />
-              </label>
-              <label className="mt-3 flex flex-col gap-2 text-sm font-medium">
-                Notas
-                <textarea
-                  value={row.notes}
-                  onChange={(e) => updateExerciseRow(index, { notes: e.target.value })}
-                  placeholder="Técnica, progressão, lesão…"
-                  rows={3}
-                  className="resize-y rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-base outline-none ring-[var(--accent)] focus:ring-2"
-                />
-              </label>
             </li>
           ))}
         </ul>

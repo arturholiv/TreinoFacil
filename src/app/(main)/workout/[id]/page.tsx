@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppCard } from "@/components/app-card";
+import { ExerciseIllustration } from "@/components/exercise-illustration";
 import { PageHeader } from "@/components/page-header";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import type { ExerciseRow, WorkoutRow } from "@/lib/types/workout-types";
@@ -213,24 +214,33 @@ export default function WorkoutDetailPage() {
           {exercises.map((ex) => (
             <li key={ex.id}>
               <AppCard className="!py-4">
-                <div className="flex items-start gap-4">
-                  <input
-                    type="checkbox"
-                    checked={ex.isCompleted}
-                    onChange={(e) => void toggleExercise(ex.id, e.target.checked)}
-                    aria-label={`Concluído: ${ex.name}`}
-                    className="mt-1 size-6 shrink-0 rounded-md border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
+                  <ExerciseIllustration
+                    exerciseName={ex.name}
+                    variant="list"
+                    className="mx-auto sm:mx-0"
                   />
-                  <div className="min-w-0 flex-1">
-                    <span
-                      className={`block text-base font-medium ${ex.isCompleted ? "text-[var(--muted-foreground)] line-through" : ""}`}
-                    >
-                      {ex.name}
-                    </span>
-                    <span className="mt-1 block text-sm text-[var(--muted-foreground)]">
-                      {ex.sets}×{ex.reps}
-                    </span>
-                    <label className="mt-4 flex flex-col gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
+                  <div className="flex min-w-0 flex-1 flex-col gap-3">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={ex.isCompleted}
+                        onChange={(e) => void toggleExercise(ex.id, e.target.checked)}
+                        aria-label={`Concluído: ${ex.name}`}
+                        className="mt-1 size-6 shrink-0 rounded-md border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span
+                          className={`block text-base font-medium ${ex.isCompleted ? "text-[var(--muted-foreground)] line-through" : ""}`}
+                        >
+                          {ex.name}
+                        </span>
+                        <span className="mt-1 block text-sm text-[var(--muted-foreground)]">
+                          {ex.sets}×{ex.reps}
+                        </span>
+                      </div>
+                    </div>
+                    <label className="flex flex-col gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
                       Peso
                       <input
                         value={ex.weight}
@@ -240,7 +250,7 @@ export default function WorkoutDetailPage() {
                         className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm font-normal text-[var(--foreground)] outline-none ring-[var(--accent)] focus:ring-2"
                       />
                     </label>
-                    <label className="mt-3 flex flex-col gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
+                    <label className="flex flex-col gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
                       Notas
                       <textarea
                         value={ex.notes}
@@ -258,6 +268,20 @@ export default function WorkoutDetailPage() {
           ))}
         </ul>
       )}
+      {exercises.length > 0 ? (
+        <p className="mt-4 text-center text-[10px] leading-snug text-[var(--muted-foreground)]">
+          Imagens de referência (quando aparecem) vêm do{" "}
+          <a
+            href="https://wger.de"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+          >
+            wger.de
+          </a>
+          , licença CC BY-SA.
+        </p>
+      ) : null}
     </>
   );
 }
