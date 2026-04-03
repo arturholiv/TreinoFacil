@@ -4,6 +4,8 @@ export type WorkoutRow = {
   id: string;
   user_id: string;
   name: string;
+  /** Regras gerais da ficha; aplicam-se a todos os exercícios do treino. */
+  notes: string;
   day_of_week: DayOfWeekKey;
   created_at: string;
 };

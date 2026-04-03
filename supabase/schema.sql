@@ -4,6 +4,7 @@ create table public.workouts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   name text not null,
+  notes text not null default '',
   day_of_week text not null check (
     day_of_week in (
       'sunday',

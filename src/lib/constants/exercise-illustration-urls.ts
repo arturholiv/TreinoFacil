@@ -34,6 +34,16 @@ const SHOULDER_MACHINE = "https://wger.de/media/exercise-images/53/Shoulder-pres
 const LATERAL_RAISE = "https://wger.de/media/exercise-images/148/lateral-dumbbell-raises-large-2.png";
 const HYPEREXT = "https://wger.de/media/exercise-images/128/Hyperextensions-1.png";
 const REAR_CABLE_FLY = "https://wger.de/media/exercise-images/822/74affc0d-03b6-4f33-b5f4-a822a2615f68.png";
+const LEG_PRESS_MACHINE =
+  "https://wger.de/media/exercise-images/371/d2136f96-3a43-4d4c-9944-1919c4ca1ce1.webp";
+const DIP_STATION =
+  "https://wger.de/media/exercise-images/194/34600351-8b0b-4cb0-8daa-583537be15b0.png";
+const CALF_STANDING =
+  "https://wger.de/media/exercise-images/622/9a429bd0-afd3-4ad0-8043-e9beec901c81.jpeg";
+const CALF_SEATED =
+  "https://wger.de/media/exercise-images/1620/edd40e39-e337-4460-a8dd-6127d40ddd16.jpeg";
+const BULGARIAN_SPLIT_SQUAT =
+  "https://wger.de/media/exercise-images/988/6283b258-a4d7-4833-84f7-a38987022d3d.png";
 
 type IllustrationRule = {
   readonly needle: string;
@@ -42,6 +52,16 @@ type IllustrationRule = {
 
 /** Ordem: frases mais específicas primeiro. */
 const ILLUSTRATION_RULES: readonly IllustrationRule[] = [
+  { needle: "agachamento búlgaro", url: BULGARIAN_SPLIT_SQUAT },
+  { needle: "prensa de ombros", url: SHOULDER_MACHINE },
+  { needle: "panturrilha sentado", url: CALF_SEATED },
+  { needle: "panturrilha em pé", url: CALF_STANDING },
+  { needle: "leg press 45", url: LEG_PRESS_MACHINE },
+  { needle: "mergulho (paralelas", url: DIP_STATION },
+  { needle: "mergulho", url: DIP_STATION },
+  { needle: "levantamento terra romeno", url: GOOD_MORNING },
+  { needle: "desenvolvimento de ombros", url: BB_SHOULDER_PRESS },
+  { needle: "supino inclinado (halteres", url: INCLINE_PRESS },
   { needle: "supino inclinado com barra", url: INCLINE_BENCH },
   { needle: "supino inclinado halter", url: INCLINE_PRESS },
   { needle: "supino inclinado leve", url: INCLINE_BENCH },
@@ -51,6 +71,7 @@ const ILLUSTRATION_RULES: readonly IllustrationRule[] = [
   { needle: "crossover (baixo", url: CABLE_CROSS },
   { needle: "cross over", url: CABLE_CROSS },
   { needle: "cross", url: CABLE_CROSS },
+  { needle: "crucifixo inverso (posterior", url: REAR_CABLE_FLY },
   { needle: "crucifixo inverso", url: REAR_CABLE_FLY },
   { needle: "crucifixo máquina", url: BUTTERFLY },
   { needle: "crucifixo", url: INCLINE_CABLE_FLY },
@@ -58,6 +79,7 @@ const ILLUSTRATION_RULES: readonly IllustrationRule[] = [
   { needle: "tríceps corda", url: ROPE_CURL },
   { needle: "tríceps testa", url: TRICEPS_SKULL },
   { needle: "tríceps banco", url: BENCH_DIP },
+  { needle: "barra fixa ou pulldown", url: CHIN_UP },
   { needle: "barra fixa", url: CHIN_UP },
   { needle: "puxada aberta", url: CHIN_UP },
   { needle: "puxada neutra", url: BB_ROW_REVERSE },
@@ -67,6 +89,7 @@ const ILLUSTRATION_RULES: readonly IllustrationRule[] = [
   { needle: "puxada", url: CHIN_UP },
   { needle: "remada cavalinho", url: T_BAR },
   { needle: "remada unilateral", url: CABLE_ROW },
+  { needle: "remada curvada ou remada baixa", url: BB_ROW_REVERSE },
   { needle: "remada curvada", url: BB_ROW_REVERSE },
   { needle: "remada baixa", url: CABLE_ROW },
   { needle: "remada", url: CABLE_ROW },
@@ -79,18 +102,21 @@ const ILLUSTRATION_RULES: readonly IllustrationRule[] = [
   { needle: "posterior", url: REAR_CABLE_FLY },
   { needle: "rosca martelo", url: HAMMER_CURL },
   { needle: "rosca alternada", url: DB_CURL },
+  { needle: "rosca direta (barra", url: BB_CURL },
   { needle: "rosca direta", url: BB_CURL },
+  { needle: "agachamento (barra", url: FRONT_SQUAT },
   { needle: "agachamento livre", url: FRONT_SQUAT },
   { needle: "agachamento", url: FRONT_SQUAT },
-  { needle: "leg press", url: HACK_SQUAT },
+  { needle: "leg press", url: LEG_PRESS_MACHINE },
   { needle: "cadeira extensora", url: HACK_SQUAT },
   { needle: "extensora", url: HACK_SQUAT },
   { needle: "mesa flexora", url: LEG_CURL_LYING },
   { needle: "cadeira flexora", url: LEG_CURL_SEATED },
   { needle: "flexora", url: LEG_CURL_SEATED },
   { needle: "stiff", url: GOOD_MORNING },
+  { needle: "afundo ou passada", url: WALKING_LUNGE },
   { needle: "avanço (passada)", url: WALKING_LUNGE },
-  { needle: "panturrilha", url: WALKING_LUNGE },
+  { needle: "panturrilha", url: CALF_STANDING },
   { needle: "abdômen", url: CRUNCH },
   { needle: "abdominal infra", url: LEG_RAISE },
   { needle: "prancha", url: HYPEREXT },

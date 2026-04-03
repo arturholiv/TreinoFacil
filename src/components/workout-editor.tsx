@@ -24,6 +24,7 @@ const DEFAULT_EXERCISE: ExerciseDraft = {
 export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
   const router = useRouter();
   const [name, setName] = useState<string>("");
+  const [workoutNotes, setWorkoutNotes] = useState<string>("");
   const [dayOfWeek, setDayOfWeek] = useState<DayOfWeekKey>("monday");
   const [exercises, setExercises] = useState<ExerciseDraft[]>([{ ...DEFAULT_EXERCISE }]);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -44,7 +45,7 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
     }
     const { data: w, error: wError } = await supabase
       .from("workouts")
-      .select("id,name,day_of_week")
+      .select("id,name,day_of_week,notes")
       .eq("id", editingWorkoutId)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -54,6 +55,7 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
       return;
     }
     setName(w.name as string);
+    setWorkoutNotes(String((w as { notes?: string }).notes ?? ""));
     setDayOfWeek(w.day_of_week as DayOfWeekKey);
     const { data: exRows, error: exError } = await supabase
       .from("exercises")
@@ -132,7 +134,11 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
     if (editingWorkoutId) {
       const { error: uError } = await supabase
         .from("workouts")
-        .update({ name: name.trim(), day_of_week: dayOfWeek })
+        .update({
+          name: name.trim(),
+          day_of_week: dayOfWeek,
+          notes: workoutNotes.trim(),
+        })
         .eq("id", editingWorkoutId)
         .eq("user_id", user.id);
       if (uError) {
@@ -171,6 +177,7 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
           user_id: user.id,
           name: name.trim(),
           day_of_week: dayOfWeek,
+          notes: workoutNotes.trim(),
         })
         .select("id")
         .single();
@@ -228,6 +235,16 @@ export function WorkoutEditor({ editingWorkoutId }: WorkoutEditorProps) {
             </option>
           ))}
         </select>
+      </label>
+      <label className="flex flex-col gap-2 text-sm font-medium">
+        Regras da ficha (geral)
+        <textarea
+          value={workoutNotes}
+          onChange={(e) => setWorkoutNotes(e.target.value)}
+          placeholder="Opcional: intensidade, falha, aquecimento, progressão — vale para todos os exercícios deste treino."
+          rows={5}
+          className="resize-y rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-base outline-none ring-[var(--accent)] focus:ring-2"
+        />
       </label>
       <div>
         <div className="mb-3 flex items-center justify-between">

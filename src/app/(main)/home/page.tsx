@@ -48,7 +48,7 @@ export default function HomePage() {
     setDbMissingTables(false);
     const { data, error } = await supabase
       .from("workouts")
-      .select("id,user_id,name,day_of_week,created_at")
+      .select("id,user_id,name,notes,day_of_week,created_at")
       .eq("user_id", user.id)
       .eq("day_of_week", todayKey)
       .order("created_at", { ascending: true })
@@ -66,7 +66,10 @@ export default function HomePage() {
       setWorkout(null);
       setTodayExercises([]);
     } else {
-      const w: WorkoutRow | null = data as WorkoutRow | null;
+      const raw = data as (WorkoutRow & { notes?: string }) | null;
+      const w: WorkoutRow | null = raw
+        ? { ...raw, notes: String(raw.notes ?? "") }
+        : null;
       setWorkout(w);
       if (w) {
         const { data: exRows, error: exError } = await supabase
@@ -224,8 +227,12 @@ export default function HomePage() {
             e, para check-in diário,{" "}
             <code className="rounded bg-[var(--muted)] px-1 py-0.5 text-xs">
               supabase/migrations/003_daily_checkins.sql
-            </code>
-            . Depois atualize esta página.
+            </code>{" "}
+            e{" "}
+            <code className="rounded bg-[var(--muted)] px-1 py-0.5 text-xs">
+              supabase/migrations/004_workout_notes.sql
+            </code>{" "}
+            (notas gerais por treino). Depois atualize esta página.
           </p>
         </AppCard>
       ) : workoutLoading ? (
@@ -241,6 +248,16 @@ export default function HomePage() {
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">
             Programado para {todayLabel}.
           </p>
+          {workout.notes.trim().length > 0 ? (
+            <details className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--input-bg)]/40 p-3 text-sm">
+              <summary className="cursor-pointer font-semibold text-[var(--foreground)]">
+                Regras da ficha (geral)
+              </summary>
+              <p className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed text-[var(--muted-foreground)]">
+                {workout.notes}
+              </p>
+            </details>
+          ) : null}
           {todayExercises.length > 0 ? (
             <div className="mt-5">
               <p className="text-xs font-semibold text-[var(--foreground)]">Lista de exercícios</p>

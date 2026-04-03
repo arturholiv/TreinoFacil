@@ -31,7 +31,7 @@ export default function WorkoutsListPage() {
     }
     const { data, error } = await supabase
       .from("workouts")
-      .select("id,user_id,name,day_of_week,created_at")
+      .select("id,user_id,name,notes,day_of_week,created_at")
       .eq("user_id", user.id)
       .order("day_of_week", { ascending: true })
       .order("name", { ascending: true });
@@ -39,7 +39,10 @@ export default function WorkoutsListPage() {
       console.error(error);
       setRows([]);
     } else {
-      const list: WorkoutRow[] = (data ?? []) as WorkoutRow[];
+      const list: WorkoutRow[] = (data ?? []).map((row) => ({
+        ...(row as WorkoutRow),
+        notes: String((row as { notes?: string }).notes ?? ""),
+      }));
       const sorted: WorkoutRow[] = [...list].sort((a, b) => {
         const ai: number = DAY_OF_WEEK_KEYS.indexOf(a.day_of_week as DayOfWeekKey);
         const bi: number = DAY_OF_WEEK_KEYS.indexOf(b.day_of_week as DayOfWeekKey);

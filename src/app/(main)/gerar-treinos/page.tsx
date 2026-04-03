@@ -13,6 +13,7 @@ import {
   buildWeeklyPlan,
   exercisesForInsert,
   SPLIT_DEFINITIONS,
+  SPLIT_KIND_LABELS_PT,
   workoutDisplayName,
 } from "@/lib/constants/split-templates";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
@@ -53,6 +54,7 @@ export default function GerarTreinosPage() {
           user_id: user.id,
           name,
           day_of_week: item.dayOfWeek,
+          notes: item.definition.workoutNotes ?? "",
         })
         .select("id")
         .single();
@@ -87,7 +89,7 @@ export default function GerarTreinosPage() {
     <>
       <PageHeader
         title="Treinos com IA"
-        subtitle="Escolha ABC, ABCD, ABCDE ou o programa Leangains (7 dias, com postura e alongamentos)."
+        subtitle="Divisão clássica, fichas de 5 dias, programa 45 min ou Leangains (7 dias)."
         action={
           <Link
             href="/workouts"
@@ -112,9 +114,10 @@ export default function GerarTreinosPage() {
       </AppCard>
       <AppCard className="mb-6 flex flex-col gap-5">
         <fieldset>
-          <legend className="text-sm font-semibold text-[var(--foreground)]">
-            Tipo de divisão
-          </legend>
+          <legend className="text-sm font-semibold text-[var(--foreground)]">Treino normal</legend>
+          <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+            Divisões clássicas e o programa semanal completo.
+          </p>
           <div className="mt-3 flex flex-col gap-2">
             {(
               [
@@ -128,12 +131,54 @@ export default function GerarTreinosPage() {
                 },
                 {
                   value: "ABCDE" as SplitKind,
-                  label: "ABCDE — 5 dias (foco estético, 1 grupo por dia + braços+abdômen)",
+                  label: "ABCDE — 5 dias (1 grupo por dia + braços+abdômen)",
                 },
                 {
                   value: "LEANGAINS" as SplitKind,
                   label:
                     "Leangains — 7 dias (seg–dom): musculação + postura/alongamentos; domingo recuperação leve",
+                },
+              ] as const
+            ).map((opt) => (
+              <label
+                key={opt.value}
+                className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] p-3"
+              >
+                <input
+                  type="radio"
+                  name="split"
+                  checked={splitKind === opt.value}
+                  onChange={() => setSplitKind(opt.value)}
+                  className="mt-1 size-4 shrink-0"
+                />
+                <span className="text-sm leading-snug">{opt.label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend className="text-sm font-semibold text-[var(--foreground)]">
+            Outras fichas (5 dias)
+          </legend>
+          <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+            Segunda a sexta — outras formas de organizar a semana.
+          </p>
+          <div className="mt-3 flex flex-col gap-2">
+            {(
+              [
+                {
+                  value: "FIVE_PPL" as SplitKind,
+                  label:
+                    "Empurrar / puxar / pernas — 5 dias (2× empurrar, 2× puxar, 1× pernas)",
+                },
+                {
+                  value: "FIVE_UPPER_LOWER" as SplitKind,
+                  label: "Superior / inferior — 5 dias (3× superior, 2× inferior)",
+                },
+                {
+                  value: "FORTY_FIVE_MIN" as SplitKind,
+                  label:
+                    "45 min — 5 dias: 2 séries pesadas por exercício + cardio em escada (seg–sex)",
                 },
               ] as const
             ).map((opt) => (
@@ -191,11 +236,13 @@ export default function GerarTreinosPage() {
             mobilidade). Cardio por dia está nas notas do último bloco ou em &quot;Cardio
             (recomendado)&quot; quando aplicável.
           </p>
+        ) : splitKind === "ABCD" ? (
+          <p className="text-sm text-[var(--muted-foreground)]">
+            ABCD usa 4 dias: segunda, terça, quinta e sexta.
+          </p>
         ) : (
           <p className="text-sm text-[var(--muted-foreground)]">
-            {splitKind === "ABCD"
-              ? "ABCD usa 4 dias: segunda, terça, quinta e sexta."
-              : "ABCDE usa segunda a sexta (5 dias)."}
+            Esta ficha usa segunda a sexta (5 dias).
           </p>
         )}
         <div>
@@ -238,7 +285,9 @@ export default function GerarTreinosPage() {
         <div className="mt-4 flex flex-col gap-4 text-[var(--muted-foreground)]">
           {(Object.keys(SPLIT_DEFINITIONS) as SplitKind[]).map((k) => (
             <div key={k}>
-              <p className="font-semibold text-[var(--foreground)]">{k}</p>
+              <p className="font-semibold text-[var(--foreground)]">
+                {SPLIT_KIND_LABELS_PT[k]}
+              </p>
               <ul className="mt-2 space-y-3">
                 {SPLIT_DEFINITIONS[k].map((d) => (
                   <li key={`${k}-${d.letter}-${d.title}`}>
