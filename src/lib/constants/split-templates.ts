@@ -32,7 +32,8 @@ export type SplitKind =
   | "FIVE_PPL"
   | "FIVE_UPPER_LOWER"
   | "FORTY_FIVE_MIN"
-  | "LEANGAINS";
+  | "LEANGAINS"
+  | "VSHAPE_WEEK";
 
 export type AbcFrequency = 3 | 6;
 
@@ -579,6 +580,329 @@ const SPLIT_FORTY_FIVE_MIN: SplitWorkoutDefinition[] = [
   },
 ];
 
+const VSHAPE_CARDIO_HINT = "15–30 min cardio";
+const VSHAPE_CARDIO_NOTES: string =
+  "Todos os dias: 15–30 min. Sugestão: ~4 sessões leves (ex.: seg, qua, sex, dom), ~2 moderadas (ex.: ter, qui). Domingo só leve. Ajuste ao condicionamento.";
+
+const VSHAPE_WORKOUT_NOTES: string = [
+  "DIVISÃO SEMANAL",
+  "Segunda: posterior (força)",
+  "Terça: superior (V-shape)",
+  "Quarta: posterior (volume)",
+  "Quinta: costas + ombro",
+  "Sexta: core + acabamento",
+  "Sábado: upper estético (pump)",
+  "Domingo: cardio leve + recuperação",
+  "",
+  "CARDIO",
+  "15–30 min por dia, após ou em janela separada do treino com pesos.",
+  "Distribuição sugerida: 4 dias intensidade leve, 2 moderados, domingo sempre leve.",
+  "",
+  "REGRAS",
+  "Última série de cada exercício próxima da falha (com segurança).",
+  "Execução controlada: excêntrica ~2–3 s.",
+  "Descanso entre séries: 60–120 s (no bi-set do sábado, sem descanso entre rosca e tríceps).",
+  "Não pule treino. Não treine \"fofo\" — intensidade honesta.",
+  "",
+  "PROGRESSÃO",
+  "Toda semana: aumentar peso OU repetições OU melhorar a execução.",
+  "Se peso e reps não evoluem, revise sono, dieta, técnica ou volume.",
+  "",
+  "DICAS",
+  "Prioridade estética: ombro lateral e costas (V-shape).",
+  "Posterior: carga + controle.",
+  "Core sempre com qualidade.",
+  "Consistência importa mais que motivação.",
+].join("\n");
+
+const VSHAPE_EX_BASE: string =
+  "Regras: última série perto da falha; descida 2–3 s; descanso 60–120 s entre séries. ";
+
+/**
+ * V-shape — 7 dias: posterior, costas, ombro lateral, core e pump; domingo recuperação.
+ */
+const SPLIT_VSHAPE_WEEK: SplitWorkoutDefinition[] = [
+  {
+    letter: "Seg",
+    title: "Posterior (força)",
+    workoutName: "V-shape — Segunda: posterior (força)",
+    cardioHint: VSHAPE_CARDIO_HINT,
+    cardioNotes: VSHAPE_CARDIO_NOTES,
+    workoutNotes: VSHAPE_WORKOUT_NOTES,
+    exercises: [
+      {
+        name: "Hip thrust",
+        sets: 4,
+        reps: "6-8",
+        notes: `${VSHAPE_EX_BASE}Bancada estável; queixo levemente encolhido; apertar glúteo no topo sem hiperlordotizar lombar.`,
+      },
+      {
+        name: "Stiff",
+        sets: 4,
+        reps: "6-8",
+        notes: `${VSHAPE_EX_BASE}Barra rente às pernas; quadril para trás; joelhos levemente flexionados; sentir posterior.`,
+      },
+      {
+        name: "Mesa flexora",
+        sets: 3,
+        reps: "8-10",
+        notes: `${VSHAPE_EX_BASE}Quadris fixos no banco; controle total na volta.`,
+      },
+      {
+        name: "Back extension",
+        sets: 3,
+        reps: "10-12",
+        notes: `${VSHAPE_EX_BASE}Movimento de quadril; não hiperextenda o pescoço; lombar neutra.`,
+      },
+      {
+        name: "Ab wheel",
+        sets: 3,
+        reps: "8-12",
+        notes: `${VSHAPE_EX_BASE}Core rígido; amplitude que mantenha lombar segura; evite queda do quadril.`,
+      },
+    ],
+  },
+  {
+    letter: "Ter",
+    title: "Superior (V-shape)",
+    workoutName: "V-shape — Terça: superior (V-shape)",
+    cardioHint: VSHAPE_CARDIO_HINT,
+    cardioNotes: VSHAPE_CARDIO_NOTES,
+    workoutNotes: VSHAPE_WORKOUT_NOTES,
+    exercises: [
+      {
+        name: "Barra fixa ou puxada",
+        sets: 4,
+        reps: "6-10",
+        notes: `${VSHAPE_EX_BASE}Escápulas antes de puxar; peito alto; amplitude completa.`,
+      },
+      {
+        name: "Supino inclinado",
+        sets: 3,
+        reps: "6-10",
+        notes: `${VSHAPE_EX_BASE}Banco ~30–45°; cotovelos sob ~45°; sem arquear agressivo.`,
+      },
+      {
+        name: "Elevação lateral",
+        sets: 4,
+        reps: "12-15",
+        notes: `${VSHAPE_EX_BASE}Prioridade V-shape: ombro lateral. Cotovelos com leve flexão; sem balanço.`,
+      },
+      {
+        name: "Rosca bíceps",
+        sets: 3,
+        reps: "8-12",
+        notes: `${VSHAPE_EX_BASE}Cotovelos fixos; supinação completa na barra reta se usar barra.`,
+      },
+      {
+        name: "Tríceps corda",
+        sets: 3,
+        reps: "10-12",
+        notes: `${VSHAPE_EX_BASE}Cotovelos colados ao tronco; abrir a corda no final.`,
+      },
+    ],
+  },
+  {
+    letter: "Qua",
+    title: "Posterior (volume)",
+    workoutName: "V-shape — Quarta: posterior (volume)",
+    cardioHint: VSHAPE_CARDIO_HINT,
+    cardioNotes: VSHAPE_CARDIO_NOTES,
+    workoutNotes: VSHAPE_WORKOUT_NOTES,
+    exercises: [
+      {
+        name: "Leg press (pé alto)",
+        sets: 4,
+        reps: "10-12",
+        notes: `${VSHAPE_EX_BASE}Pés mais altos na plataforma para enfatizar posterior/glúteo; lombar colada.`,
+      },
+      {
+        name: "Bridge",
+        sets: 3,
+        reps: "10-12",
+        notes: `${VSHAPE_EX_BASE}Pausa 1 s contraindo glúteo no topo; não arqueie cervical.`,
+      },
+      {
+        name: "Step-up",
+        sets: 3,
+        reps: "8-10",
+        notes: `${VSHAPE_EX_BASE}Joelho da perna da frente alinhado com pé; empurre pelo calcanhar do degrau.`,
+      },
+      {
+        name: "Mesa flexora unilateral",
+        sets: 3,
+        reps: "10-12",
+        notes: `${VSHAPE_EX_BASE}Quadril estável; igualar pernas ao longo das semanas.`,
+      },
+      {
+        name: "Prancha lateral",
+        sets: 3,
+        reps: "30s",
+        notes: `${VSHAPE_EX_BASE}Corpo em linha; quadril elevado; troque de lado a cada série.`,
+      },
+    ],
+  },
+  {
+    letter: "Qui",
+    title: "Costas + ombro",
+    workoutName: "V-shape — Quinta: costas + ombro",
+    cardioHint: VSHAPE_CARDIO_HINT,
+    cardioNotes: VSHAPE_CARDIO_NOTES,
+    workoutNotes: VSHAPE_WORKOUT_NOTES,
+    exercises: [
+      {
+        name: "Puxada alta aberta",
+        sets: 4,
+        reps: "8-12",
+        notes: `${VSHAPE_EX_BASE}Pegada além da linha dos ombros; puxar cotovelos para baixo e para trás.`,
+      },
+      {
+        name: "Remada curvada",
+        sets: 3,
+        reps: "8-12",
+        notes: `${VSHAPE_EX_BASE}Coluna neutra; puxada em arco em direção ao quadril.`,
+      },
+      {
+        name: "Face pull",
+        sets: 3,
+        reps: "12-15",
+        notes: `${VSHAPE_EX_BASE}Cotovelos altos; puxar em direção ao rosto; ombro saudável.`,
+      },
+      {
+        name: "Desenvolvimento",
+        sets: 3,
+        reps: "8-12",
+        notes: `${VSHAPE_EX_BASE}Core firme; trajeto vertical; sem bloquear agressivo.`,
+      },
+      {
+        name: "Crucifixo inverso",
+        sets: 3,
+        reps: "12-15",
+        notes: `${VSHAPE_EX_BASE}Posterior de ombro; abrir peito; sem impulso.`,
+      },
+    ],
+  },
+  {
+    letter: "Sex",
+    title: "Core + acabamento",
+    workoutName: "V-shape — Sexta: core + acabamento",
+    cardioHint: VSHAPE_CARDIO_HINT,
+    cardioNotes: VSHAPE_CARDIO_NOTES,
+    workoutNotes: VSHAPE_WORKOUT_NOTES,
+    exercises: [
+      {
+        name: "Ab wheel",
+        sets: 3,
+        reps: "8-12",
+        notes: `${VSHAPE_EX_BASE}Qualidade máxima no core; lombar neutra.`,
+      },
+      {
+        name: "Cable crunch",
+        sets: 3,
+        reps: "10-15",
+        notes: `${VSHAPE_EX_BASE}Flexione torax em direção à pélvis; não puxe com braços só.`,
+      },
+      {
+        name: "Elevação de pernas",
+        sets: 3,
+        reps: "10-15",
+        notes: `${VSHAPE_EX_BASE}Controle a descida; lombar pode ficar apoiada se necessário.`,
+      },
+      {
+        name: "Hip thrust leve (pausa)",
+        sets: 3,
+        reps: "12",
+        notes: `${VSHAPE_EX_BASE}Carga leve; pausa 1–2 s no topo focando glúteo.`,
+      },
+      {
+        name: "Abdução",
+        sets: 3,
+        reps: "15",
+        notes: `${VSHAPE_EX_BASE}Máquina ou elástico; amplitude controlada; glúteo médio.`,
+      },
+    ],
+  },
+  {
+    letter: "Sáb",
+    title: "Upper estético (pump)",
+    workoutName: "V-shape — Sábado: upper estético (pump)",
+    cardioHint: VSHAPE_CARDIO_HINT,
+    cardioNotes: VSHAPE_CARDIO_NOTES,
+    workoutNotes: VSHAPE_WORKOUT_NOTES,
+    exercises: [
+      {
+        name: "Barra fixa",
+        sets: 3,
+        reps: "quase falha",
+        notes: `${VSHAPE_EX_BASE}Séries curtas e densas; técnica limpa até quase não conseguir mais uma rep boa.`,
+      },
+      {
+        name: "Elevação lateral",
+        sets: 5,
+        reps: "15",
+        notes: `${VSHAPE_EX_BASE}Volume para ombro lateral; carga moderada e forma perfeita.`,
+      },
+      {
+        name: "Crucifixo máquina",
+        sets: 3,
+        reps: "12-15",
+        notes: `${VSHAPE_EX_BASE}Alongar peitoral no fundo; apertar no meio.`,
+      },
+      {
+        name: "Rosca + tríceps (bi-set)",
+        sets: 3,
+        reps: "10-12",
+        notes: `${VSHAPE_EX_BASE}Faça uma série de rosca e em seguida tríceps (corda ou similar) sem descanso entre; descanse 60–120 s só após completar o par.`,
+      },
+      {
+        name: "Face pull",
+        sets: 3,
+        reps: "15",
+        notes: `${VSHAPE_EX_BASE}Posterior e postura; alto volume leve.`,
+      },
+    ],
+  },
+  {
+    letter: "Dom",
+    title: "Cardio + recuperação",
+    workoutName: "V-shape — Domingo: cardio + recuperação",
+    workoutNotes: VSHAPE_WORKOUT_NOTES,
+    exercises: [
+      {
+        name: "Cardio leve",
+        sets: 1,
+        reps: "20-35 min",
+        notes:
+          "Caminhada, bike ou elíptico em ritmo conversável. Objetivo: circulação e recuperação — não competir com o relógio.",
+      },
+      {
+        name: "Alongamento de peitoral",
+        sets: 2,
+        reps: "30-45s",
+        notes: "Respiração calma; ombro relaxado.",
+      },
+      {
+        name: "Alongamento posterior de coxa",
+        sets: 2,
+        reps: "30-45s",
+        notes: "Quadril neutro; alongar sem dor aguda.",
+      },
+      {
+        name: "Alongamento dorsal e costas",
+        sets: 2,
+        reps: "30-45s",
+        notes: "Costas arredondadas e abertas em movimentos suaves.",
+      },
+      {
+        name: "Mobilidade de quadril",
+        sets: 2,
+        reps: "8-10",
+        notes: "Círculos ou abdução leve em pé; prepara a semana seguinte.",
+      },
+    ],
+  },
+];
+
 const LEANGAINS_WEEK_DAYS: DayOfWeekKey[] = [
   "monday",
   "tuesday",
@@ -745,6 +1069,7 @@ export const SPLIT_DEFINITIONS: Record<SplitKind, SplitWorkoutDefinition[]> = {
   FIVE_UPPER_LOWER: SPLIT_FIVE_UPPER_LOWER,
   FORTY_FIVE_MIN: SPLIT_FORTY_FIVE_MIN,
   LEANGAINS: SPLIT_LEANGAINS,
+  VSHAPE_WEEK: SPLIT_VSHAPE_WEEK,
 };
 
 /** Título curto para listagens (ex.: resumo de exercícios). */
@@ -756,6 +1081,7 @@ export const SPLIT_KIND_LABELS_PT: Record<SplitKind, string> = {
   FIVE_UPPER_LOWER: "5 dias — superior e inferior",
   FORTY_FIVE_MIN: "45 min — intensidade (5 dias)",
   LEANGAINS: "Leangains (7 dias)",
+  VSHAPE_WEEK: "V-shape — 7 dias (costas, ombro, posterior)",
 };
 
 export type PlannedWorkout = {
@@ -771,6 +1097,12 @@ export function buildWeeklyPlan(kind: SplitKind, abcFrequency: AbcFrequency): Pl
     return LEANGAINS_WEEK_DAYS.map((dayOfWeek, i) => ({
       dayOfWeek,
       definition: SPLIT_LEANGAINS[i] as SplitWorkoutDefinition,
+    }));
+  }
+  if (kind === "VSHAPE_WEEK") {
+    return LEANGAINS_WEEK_DAYS.map((dayOfWeek, i) => ({
+      dayOfWeek,
+      definition: SPLIT_VSHAPE_WEEK[i] as SplitWorkoutDefinition,
     }));
   }
   const defs: SplitWorkoutDefinition[] = SPLIT_DEFINITIONS[kind];

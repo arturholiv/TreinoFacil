@@ -89,7 +89,7 @@ export default function GerarTreinosPage() {
     <>
       <PageHeader
         title="Treinos com IA"
-        subtitle="Divisão clássica, fichas de 5 dias, programa 45 min ou Leangains (7 dias)."
+        subtitle="Divisão clássica, fichas de 5 dias, 45 min, Leangains ou V-shape (7 dias)."
         action={
           <Link
             href="/workouts"
@@ -137,6 +137,11 @@ export default function GerarTreinosPage() {
                   value: "LEANGAINS" as SplitKind,
                   label:
                     "Leangains — 7 dias (seg–dom): musculação + postura/alongamentos; domingo recuperação leve",
+                },
+                {
+                  value: "VSHAPE_WEEK" as SplitKind,
+                  label:
+                    "V-shape — 7 dias: posterior, costas, ombro lateral, core, pump; domingo cardio + alongamento",
                 },
               ] as const
             ).map((opt) => (
@@ -229,12 +234,24 @@ export default function GerarTreinosPage() {
               ))}
             </div>
           </fieldset>
-        ) : splitKind === "LEANGAINS" ? (
+        ) : splitKind === "LEANGAINS" || splitKind === "VSHAPE_WEEK" ? (
           <p className="text-sm text-[var(--muted-foreground)]">
-            Leangains gera <strong>sete treinos</strong>: segunda a sábado com fichas detalhadas +
-            postura; <strong>domingo</strong> só recuperação leve (caminhada/bike, alongamentos e
-            mobilidade). Cardio por dia está nas notas do último bloco ou em &quot;Cardio
-            (recomendado)&quot; quando aplicável.
+            {splitKind === "LEANGAINS" ? (
+              <>
+                Leangains gera <strong>sete treinos</strong>: segunda a sábado com fichas detalhadas +
+                postura; <strong>domingo</strong> só recuperação leve (caminhada/bike, alongamentos e
+                mobilidade). Cardio por dia está nas notas do último bloco ou em &quot;Cardio
+                (recomendado)&quot; quando aplicável.
+              </>
+            ) : (
+              <>
+                V-shape gera <strong>sete treinos</strong> (seg–dom) com foco em{" "}
+                <strong>costas, ombro lateral e posterior</strong>. Cada treino inclui{" "}
+                <strong>regras gerais</strong> nas notas da ficha e dicas por exercício. Segunda a
+                sábado: musculação + bloco &quot;Cardio (recomendado)&quot;; domingo: cardio leve e
+                alongamentos (sem cardio extra duplicado na lista).
+              </>
+            )}
           </p>
         ) : splitKind === "ABCD" ? (
           <p className="text-sm text-[var(--muted-foreground)]">

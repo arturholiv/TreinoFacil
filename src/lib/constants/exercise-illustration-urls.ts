@@ -44,6 +44,14 @@ const CALF_SEATED =
   "https://wger.de/media/exercise-images/1620/edd40e39-e337-4460-a8dd-6127d40ddd16.jpeg";
 const BULGARIAN_SPLIT_SQUAT =
   "https://wger.de/media/exercise-images/988/6283b258-a4d7-4833-84f7-a38987022d3d.png";
+const HIP_THRUST =
+  "https://wger.de/media/exercise-images/1614/7f3cfae2-e062-4211-9a6b-5a10851ce7f4.jpg";
+const AB_WHEEL =
+  "https://wger.de/media/exercise-images/1573/a9ab402b-61ef-4d60-b91a-df52bf7f41a9.jpg";
+const SIDE_PLANK =
+  "https://wger.de/media/exercise-images/458/b7bd9c28-9f1d-4647-bd17-ab6a3adf5770.png";
+const HIP_ABDUCTION_MACHINE =
+  "https://wger.de/media/exercise-images/1748/923a3ff7-c269-49bd-9f03-697151a40f06.jpg";
 
 type IllustrationRule = {
   readonly needle: string;
@@ -52,6 +60,22 @@ type IllustrationRule = {
 
 /** Ordem: frases mais específicas primeiro. */
 const ILLUSTRATION_RULES: readonly IllustrationRule[] = [
+  { needle: "hip thrust leve", url: HIP_THRUST },
+  { needle: "hip thrust", url: HIP_THRUST },
+  { needle: "ab wheel", url: AB_WHEEL },
+  { needle: "back extension", url: HYPEREXT },
+  { needle: "prancha lateral", url: SIDE_PLANK },
+  { needle: "cable crunch", url: CRUNCH },
+  { needle: "elevação de pernas", url: LEG_RAISE },
+  { needle: "abdução", url: HIP_ABDUCTION_MACHINE },
+  { needle: "puxada alta aberta", url: CHIN_UP },
+  { needle: "leg press (pe alto", url: LEG_PRESS_MACHINE },
+  { needle: "mesa flexora unilateral", url: LEG_CURL_LYING },
+  { needle: "step-up", url: WALKING_LUNGE },
+  { needle: "bridge", url: HIP_THRUST },
+  { needle: "rosca biceps", url: BB_CURL },
+  { needle: "rosca + triceps", url: BB_CURL },
+  { needle: "mobilidade de quadril", url: WALKING_LUNGE },
   { needle: "agachamento búlgaro", url: BULGARIAN_SPLIT_SQUAT },
   { needle: "prensa de ombros", url: SHOULDER_MACHINE },
   { needle: "panturrilha sentado", url: CALF_SEATED },
@@ -134,7 +158,7 @@ const ILLUSTRATION_RULES: readonly IllustrationRule[] = [
 ];
 
 const SKIP_PATTERN =
-  /cardio|alongamento|regras|lembrete|checklist|caminhada|bike|recupera|hiit|opcional|omitir|^\s*—\s*$/i;
+  /cardio|caminhada|bike|recupera|hiit|opcional|omitir|^\s*—\s*$/i;
 
 function stripDiacritics(value: string): string {
   return value.normalize("NFD").replace(/\p{M}/gu, "");
@@ -153,7 +177,8 @@ export function getExerciseIllustrationUrl(exerciseName: string): string | null 
     return null;
   }
   for (const rule of ILLUSTRATION_RULES) {
-    if (key.includes(rule.needle)) {
+    const needleKey: string = normalizeExerciseIllustrationKey(rule.needle);
+    if (needleKey.length >= 2 && key.includes(needleKey)) {
       return rule.url;
     }
   }
