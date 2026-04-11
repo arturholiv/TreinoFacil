@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactElement } from "react";
 import { AppCard } from "@/components/app-card";
 import { ExerciseIllustration } from "@/components/exercise-illustration";
 import { PageHeader } from "@/components/page-header";
@@ -13,15 +13,67 @@ import { getLocalDateYmd } from "@/lib/utils/local-date";
 
 type ExerciseWithDone = ExerciseRow & { isCompleted: boolean };
 
+function isMissingWorkoutNotesColumnError(err: { message?: string } | null): boolean {
+  const m: string = err?.message?.toLowerCase() ?? "";
+  if (m.length === 0) {
+    return false;
+  }
+  return (
+    (m.includes("notes") && m.includes("workout")) ||
+    (m.includes("schema cache") && m.includes("notes"))
+  );
+}
+
+function IconCheckCircle(props: { className?: string }): ReactElement {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={props.className}
+      aria-hidden
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
+function IconChevronDown(props: { className?: string }): ReactElement {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={props.className}
+      aria-hidden
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
 export default function WorkoutDetailPage() {
   const params = useParams();
   const router = useRouter();
   const idParam = params["id"];
-  const workoutId: string = typeof idParam === "string" ? idParam : "";
+  const workoutId: string =
+    typeof idParam === "string" ? idParam : Array.isArray(idParam) ? (idParam[0] ?? "") : "";
   const [workout, setWorkout] = useState<WorkoutRow | null>(null);
   const [exercises, setExercises] = useState<ExerciseWithDone[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [expandedCompletedIds, setExpandedCompletedIds] = useState<Record<string, boolean>>({});
+  const [authMissing, setAuthMissing] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  /** Quando true, exercício concluído aparece só na linha compacta (usuário escolheu recolher). */
+  const [collapsedCompletedIds, setCollapsedCompletedIds] = useState<Record<string, boolean>>({});
   const [sessionFinished, setSessionFinished] = useState<boolean>(false);
   const [isFinishing, setIsFinishing] = useState<boolean>(false);
   const [finishMessage, setFinishMessage] = useState<string>("");
@@ -32,30 +84,58 @@ export default function WorkoutDetailPage() {
     exercisesRef.current = exercises;
   }, [exercises]);
   const loadData = useCallback(async () => {
+    setLoadError(null);
+    setAuthMissing(false);
     if (!workoutId) {
+      setWorkout(null);
+      setExercises([]);
+      setIsLoading(false);
       return;
     }
     if (lastResetSessionForWorkoutIdRef.current !== workoutId) {
       lastResetSessionForWorkoutIdRef.current = workoutId;
       setSessionFinished(false);
       setFinishMessage("");
+      setCollapsedCompletedIds({});
     }
     setIsLoading(true);
     const supabase = getSupabaseBrowserClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    let user = (await supabase.auth.getUser()).data.user;
     if (!user) {
+      const sessionUser = (await supabase.auth.getSession()).data.session?.user;
+      user = sessionUser ?? null;
+    }
+    if (!user) {
+      setWorkout(null);
+      setExercises([]);
+      setAuthMissing(true);
       setIsLoading(false);
       return;
     }
-    const { data: workoutRow, error: workoutError } = await supabase
+    let workoutRes = await supabase
       .from("workouts")
       .select("id,user_id,name,notes,day_of_week,created_at")
       .eq("id", workoutId)
       .eq("user_id", user.id)
       .maybeSingle();
-    if (workoutError || !workoutRow) {
+    if (workoutRes.error && isMissingWorkoutNotesColumnError(workoutRes.error)) {
+      workoutRes = await supabase
+        .from("workouts")
+        .select("id,user_id,name,day_of_week,created_at")
+        .eq("id", workoutId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+    }
+    const workoutRow = workoutRes.data;
+    const workoutError = workoutRes.error;
+    if (workoutError) {
+      setWorkout(null);
+      setExercises([]);
+      setLoadError(workoutError.message);
+      setIsLoading(false);
+      return;
+    }
+    if (!workoutRow) {
       setWorkout(null);
       setExercises([]);
       setIsLoading(false);
@@ -115,8 +195,17 @@ export default function WorkoutDetailPage() {
     }, 0);
     return () => window.clearTimeout(timeoutId);
   }, [loadData]);
-  function setCompletedExpanded(exerciseId: string, expanded: boolean) {
-    setExpandedCompletedIds((prev) => ({ ...prev, [exerciseId]: expanded }));
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      void loadData();
+    });
+    return () => subscription.unsubscribe();
+  }, [loadData]);
+  function setExerciseCollapsed(exerciseId: string, collapsed: boolean) {
+    setCollapsedCompletedIds((prev) => ({ ...prev, [exerciseId]: collapsed }));
   }
   async function toggleExercise(exerciseId: string, nextCompleted: boolean) {
     const supabase = getSupabaseBrowserClient();
@@ -129,8 +218,10 @@ export default function WorkoutDetailPage() {
     setExercises((prev) =>
       prev.map((ex) => (ex.id === exerciseId ? { ...ex, isCompleted: nextCompleted } : ex)),
     );
+    if (!nextCompleted) {
+      setExerciseCollapsed(exerciseId, false);
+    }
     if (nextCompleted) {
-      setCompletedExpanded(exerciseId, false);
       const { error: delErr } = await supabase
         .from("exercise_logs")
         .delete()
@@ -151,7 +242,6 @@ export default function WorkoutDetailPage() {
         void loadData();
       }
     } else {
-      setCompletedExpanded(exerciseId, true);
       const { error } = await supabase
         .from("exercise_logs")
         .delete()
@@ -222,7 +312,7 @@ export default function WorkoutDetailPage() {
       }
     }
     setExercises((prev) => prev.map((e) => ({ ...e, isCompleted: true })));
-    setExpandedCompletedIds({});
+    setCollapsedCompletedIds({});
     const { error: checkinError } = await supabase.from("daily_checkins").insert({
       user_id: user.id,
       checkin_date: logDate,
@@ -249,6 +339,8 @@ export default function WorkoutDetailPage() {
   }
   const doneCount: number = exercises.filter((e) => e.isCompleted).length;
   const totalCount: number = exercises.length;
+  const progressRatio: number = totalCount > 0 ? doneCount / totalCount : 0;
+  const showStickyFinish: boolean = exercises.length > 0 && !sessionFinished;
   if (isLoading) {
     return (
       <>
@@ -259,12 +351,67 @@ export default function WorkoutDetailPage() {
       </>
     );
   }
+  if (!workoutId) {
+    return (
+      <>
+        <PageHeader title="Treino" />
+        <AppCard>
+          <p className="text-[var(--muted-foreground)]">Link do treino inválido.</p>
+          <Link
+            href="/workouts"
+            className="mt-4 inline-block text-sm font-semibold text-[var(--accent)]"
+          >
+            Voltar aos treinos
+          </Link>
+        </AppCard>
+      </>
+    );
+  }
+  if (authMissing) {
+    return (
+      <>
+        <PageHeader title="Treino" subtitle="Sessão" />
+        <AppCard>
+          <p className="text-[var(--muted-foreground)]">
+            Entre na sua conta para carregar este treino. Se acabou de fazer login, aguarde um
+            instante ou atualize a página.
+          </p>
+          <Link
+            href={`/login?next=/workout/${encodeURIComponent(workoutId)}`}
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-[var(--accent-foreground)]"
+          >
+            Ir para login
+          </Link>
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="mt-3 w-full rounded-xl border border-[var(--border)] py-3 text-sm font-semibold text-[var(--foreground)]"
+          >
+            Tentar de novo
+          </button>
+        </AppCard>
+      </>
+    );
+  }
   if (!workout) {
     return (
       <>
         <PageHeader title="Treino" />
         <AppCard>
-          <p className="text-[var(--muted-foreground)]">Treino não encontrado.</p>
+          <p className="text-[var(--muted-foreground)]">
+            Treino não encontrado ou você não tem permissão para vê-lo.
+          </p>
+          {loadError ? (
+            <p className="mt-2 text-xs text-amber-700 dark:text-amber-400" role="status">
+              Detalhe: {loadError}
+            </p>
+          ) : null}
+          <p className="mt-3 text-xs text-[var(--muted-foreground)]">
+            Se você criou treinos antes de atualizar o banco, confira se a migração{" "}
+            <code className="rounded bg-[var(--muted)] px-1">004_workout_notes.sql</code> foi
+            aplicada no Supabase (ou rode o SQL da coluna <code className="rounded bg-[var(--muted)] px-1">notes</code> em{" "}
+            <code className="rounded bg-[var(--muted)] px-1">workouts</code>).
+          </p>
           <Link
             href="/workouts"
             className="mt-4 inline-block text-sm font-semibold text-[var(--accent)]"
@@ -282,16 +429,19 @@ export default function WorkoutDetailPage() {
         subtitle={
           sessionFinished
             ? "Treino concluído hoje"
-            : `${doneCount}/${totalCount} exercício(s) feitos hoje`
+            : `${doneCount} de ${totalCount} exercícios nesta sessão`
         }
       />
       {workout.notes.trim().length > 0 ? (
         <details
           open
-          className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 text-sm"
+          className="group mb-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 text-sm transition-shadow hover:shadow-sm"
         >
-          <summary className="cursor-pointer font-semibold text-[var(--foreground)]">
-            Regras da ficha (geral)
+          <summary className="cursor-pointer list-none font-semibold text-[var(--foreground)] [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center justify-between gap-2">
+              Regras da ficha (geral)
+              <IconChevronDown className="size-4 shrink-0 text-[var(--muted-foreground)] transition-transform duration-200 group-open:rotate-180" />
+            </span>
           </summary>
           <p className="mt-3 whitespace-pre-wrap leading-relaxed text-[var(--muted-foreground)]">
             {workout.notes}
@@ -309,130 +459,178 @@ export default function WorkoutDetailPage() {
           </Link>
         </AppCard>
       ) : sessionFinished ? null : (
-        <ul className="flex flex-col gap-3">
-          {exercises.map((ex) => {
-            const showFullCard: boolean = !ex.isCompleted || expandedCompletedIds[ex.id];
-            if (!showFullCard) {
-              return (
-                <li key={ex.id}>
-                  <AppCard className="!py-3">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={ex.isCompleted}
-                        onChange={(e) => void toggleExercise(ex.id, e.target.checked)}
-                        aria-label={`Concluído: ${ex.name}`}
-                        className="size-6 shrink-0 rounded-md border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
-                      />
+        <div className={showStickyFinish ? "pb-36" : ""}>
+          <div
+            className="mb-4 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] p-3"
+            role="status"
+            aria-label={`Progresso: ${doneCount} de ${totalCount}`}
+          >
+            <div className="mb-2 flex items-center justify-between text-xs font-medium text-[var(--muted-foreground)]">
+              <span>Progresso da sessão</span>
+              <span className="tabular-nums text-[var(--foreground)]">
+                {doneCount}/{totalCount}
+              </span>
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-full bg-[var(--muted)]">
+              <div
+                className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-300 ease-out"
+                style={{ width: `${Math.round(progressRatio * 100)}%` }}
+              />
+            </div>
+          </div>
+          <ul className="flex flex-col gap-4">
+            {exercises.map((ex) => {
+              const isCompact: boolean =
+                ex.isCompleted && Boolean(collapsedCompletedIds[ex.id]);
+              if (isCompact) {
+                return (
+                  <li key={ex.id}>
+                    <button
+                      type="button"
+                      onClick={() => setExerciseCollapsed(ex.id, false)}
+                      className="flex w-full items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3.5 text-left shadow-sm transition active:scale-[0.99] active:bg-[var(--muted)]"
+                    >
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                        <IconCheckCircle className="size-5" />
+                      </span>
                       <div className="min-w-0 flex-1">
-                        <span className="block text-sm font-semibold text-[var(--muted-foreground)] line-through">
+                        <span className="block text-sm font-semibold text-[var(--foreground)] line-through decoration-[var(--muted-foreground)]/50">
                           {ex.name}
                         </span>
                         <span className="mt-0.5 block text-xs text-[var(--muted-foreground)]">
-                          {ex.sets}×{ex.reps}
+                          {ex.sets}×{ex.reps} · toque para ver peso e notas
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setCompletedExpanded(ex.id, true)}
-                        className="shrink-0 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-xs font-semibold text-[var(--accent)]"
-                      >
-                        Detalhes
-                      </button>
+                      <IconChevronDown className="size-5 shrink-0 text-[var(--accent)]" />
+                    </button>
+                  </li>
+                );
+              }
+              return (
+                <li key={ex.id}>
+                  <AppCard
+                    className={`!py-4 transition-[box-shadow,border-color] duration-200 ${
+                      ex.isCompleted
+                        ? "border-emerald-500/35 shadow-[0_0_0_1px_rgba(16,185,129,0.12)]"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
+                      <ExerciseIllustration
+                        exerciseName={ex.name}
+                        variant="list"
+                        className="mx-auto sm:mx-0"
+                      />
+                      <div className="flex min-w-0 flex-1 flex-col gap-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <span
+                              className={`block text-base font-semibold leading-snug ${
+                                ex.isCompleted
+                                  ? "text-[var(--muted-foreground)] line-through decoration-[var(--muted-foreground)]/40"
+                                  : "text-[var(--foreground)]"
+                              }`}
+                            >
+                              {ex.name}
+                            </span>
+                            <span className="mt-1 block text-sm text-[var(--muted-foreground)]">
+                              {ex.sets}×{ex.reps}
+                            </span>
+                          </div>
+                          {ex.isCompleted ? (
+                            <button
+                              type="button"
+                              onClick={() => setExerciseCollapsed(ex.id, true)}
+                              className="shrink-0 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] transition hover:bg-[var(--muted)]"
+                            >
+                              Recolher
+                            </button>
+                          ) : null}
+                        </div>
+                        <label className="flex flex-col gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
+                          Peso
+                          <input
+                            value={ex.weight}
+                            onChange={(e) => updateExerciseMeta(ex.id, { weight: e.target.value })}
+                            onBlur={() => void persistExerciseMeta(ex.id)}
+                            placeholder="Ex.: 22,5 kg"
+                            className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm font-normal text-[var(--foreground)] outline-none ring-[var(--accent)] focus:ring-2"
+                          />
+                        </label>
+                        <label className="flex flex-col gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
+                          Notas
+                          <textarea
+                            value={ex.notes}
+                            onChange={(e) => updateExerciseMeta(ex.id, { notes: e.target.value })}
+                            onBlur={() => void persistExerciseMeta(ex.id)}
+                            placeholder="Anotações"
+                            rows={3}
+                            className="resize-y rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm font-normal text-[var(--foreground)] outline-none ring-[var(--accent)] focus:ring-2"
+                          />
+                        </label>
+                        <div className="pt-1">
+                          {ex.isCompleted ? (
+                            <button
+                              type="button"
+                              onClick={() => void toggleExercise(ex.id, false)}
+                              className="flex w-full min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-emerald-500/40 bg-emerald-500/10 px-4 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-500/15 dark:text-emerald-200"
+                            >
+                              <IconCheckCircle className="size-5 shrink-0" />
+                              Feito — toque para desfazer
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => void toggleExercise(ex.id, true)}
+                              className="w-full min-h-12 rounded-xl bg-[var(--accent)] px-4 text-base font-semibold text-[var(--accent-foreground)] shadow-sm transition hover:opacity-95 active:scale-[0.99]"
+                            >
+                              Marcar como feito
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </AppCard>
                 </li>
               );
-            }
-            return (
-              <li key={ex.id}>
-                <AppCard className="!py-4">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
-                    <ExerciseIllustration
-                      exerciseName={ex.name}
-                      variant="list"
-                      className="mx-auto sm:mx-0"
-                    />
-                    <div className="flex min-w-0 flex-1 flex-col gap-3">
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          checked={ex.isCompleted}
-                          onChange={(e) => void toggleExercise(ex.id, e.target.checked)}
-                          aria-label={`Concluído: ${ex.name}`}
-                          className="mt-1 size-6 shrink-0 rounded-md border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-start justify-between gap-2">
-                            <span
-                              className={`block text-base font-medium ${ex.isCompleted ? "text-[var(--muted-foreground)] line-through" : ""}`}
-                            >
-                              {ex.name}
-                            </span>
-                            {ex.isCompleted ? (
-                              <button
-                                type="button"
-                                onClick={() => setCompletedExpanded(ex.id, false)}
-                                className="text-xs font-semibold text-[var(--accent)] underline-offset-2 hover:underline"
-                              >
-                                Ocultar
-                              </button>
-                            ) : null}
-                          </div>
-                          <span className="mt-1 block text-sm text-[var(--muted-foreground)]">
-                            {ex.sets}×{ex.reps}
-                          </span>
-                        </div>
-                      </div>
-                      <label className="flex flex-col gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
-                        Peso
-                        <input
-                          value={ex.weight}
-                          onChange={(e) => updateExerciseMeta(ex.id, { weight: e.target.value })}
-                          onBlur={() => void persistExerciseMeta(ex.id)}
-                          placeholder="Ex.: 22,5 kg"
-                          className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm font-normal text-[var(--foreground)] outline-none ring-[var(--accent)] focus:ring-2"
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
-                        Notas
-                        <textarea
-                          value={ex.notes}
-                          onChange={(e) => updateExerciseMeta(ex.id, { notes: e.target.value })}
-                          onBlur={() => void persistExerciseMeta(ex.id)}
-                          placeholder="Anotações"
-                          rows={3}
-                          className="resize-y rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm font-normal text-[var(--foreground)] outline-none ring-[var(--accent)] focus:ring-2"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </AppCard>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      {exercises.length > 0 && !sessionFinished ? (
-        <AppCard className="mt-4">
-          <p className="text-sm text-[var(--foreground)]">
-            Ao finalizar, os exercícios que faltam são marcados para hoje e o{" "}
-            <strong>check-in diário</strong> (aba Hábito) é registrado automaticamente.
+            })}
+          </ul>
+          <p className="mt-6 text-center text-[10px] leading-snug text-[var(--muted-foreground)]">
+            Imagens de referência (quando aparecem) vêm do{" "}
+            <a
+              href="https://wger.de"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+            >
+              wger.de
+            </a>
+            , licença CC BY-SA.
           </p>
-          <PrimaryButton
-            type="button"
-            className="mt-4"
-            disabled={isFinishing}
-            onClick={() => void handleFinishWorkout()}
-          >
-            {isFinishing ? "Salvando…" : "Finalizar treino e registrar check-in"}
-          </PrimaryButton>
-          {finishMessage ? (
-            <p className="mt-3 text-sm text-amber-700 dark:text-amber-400" role="status">
-              {finishMessage}
+        </div>
+      )}
+      {showStickyFinish ? (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
+          <div className="pointer-events-auto w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--card)]/95 p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md dark:shadow-[0_-8px_30px_rgba(0,0,0,0.35)]">
+            <p className="text-center text-xs leading-snug text-[var(--muted-foreground)]">
+              Quando terminar a sessão, use o botão abaixo para salvar o treino de hoje e registrar o
+              check-in em <strong className="text-[var(--foreground)]">Hábito</strong>.
             </p>
-          ) : null}
-        </AppCard>
+            <PrimaryButton
+              type="button"
+              className="mt-3 min-h-[3.25rem] text-[1.05rem]"
+              disabled={isFinishing}
+              onClick={() => void handleFinishWorkout()}
+            >
+              {isFinishing ? "Salvando…" : "Concluir treino de hoje"}
+            </PrimaryButton>
+            {finishMessage ? (
+              <p className="mt-2 text-center text-xs text-amber-700 dark:text-amber-400" role="status">
+                {finishMessage}
+              </p>
+            ) : null}
+          </div>
+        </div>
       ) : null}
       {sessionFinished ? (
         <AppCard className="mt-4 border-emerald-200 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
@@ -463,25 +661,11 @@ export default function WorkoutDetailPage() {
           <button
             type="button"
             onClick={() => setSessionFinished(false)}
-            className="mt-4 w-full text-center text-xs font-semibold text-[var(--muted-foreground)] underline-offset-2 hover:underline"
+            className="mt-4 w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] py-3 text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--muted)]"
           >
-            Mostrar lista de exercícios de novo
+            Voltar à lista do treino
           </button>
         </AppCard>
-      ) : null}
-      {exercises.length > 0 && !sessionFinished ? (
-        <p className="mt-4 text-center text-[10px] leading-snug text-[var(--muted-foreground)]">
-          Imagens de referência (quando aparecem) vêm do{" "}
-          <a
-            href="https://wger.de"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-[var(--accent)] underline-offset-2 hover:underline"
-          >
-            wger.de
-          </a>
-          , licença CC BY-SA.
-        </p>
       ) : null}
     </>
   );

@@ -42,7 +42,17 @@ export default function LoginPage() {
         setErrorMessage(error.message);
         return;
       }
-      router.replace("/home");
+      const search: string =
+        typeof window !== "undefined" ? window.location.search : "";
+      const nextParam: string | null = new URLSearchParams(search).get("next");
+      const nextPath: string =
+        nextParam !== null &&
+        nextParam.startsWith("/") &&
+        !nextParam.startsWith("//") &&
+        !nextParam.includes(":")
+          ? nextParam
+          : "/home";
+      router.replace(nextPath);
       router.refresh();
     } catch (unknownError: unknown) {
       const message: string =
