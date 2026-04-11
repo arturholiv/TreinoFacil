@@ -61,6 +61,24 @@ function IconChevronDown(props: { className?: string }): ReactElement {
   );
 }
 
+function IconChevronUp(props: { className?: string }): ReactElement {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={props.className}
+      aria-hidden
+    >
+      <polyline points="18 15 12 9 6 15" />
+    </svg>
+  );
+}
+
 export default function WorkoutDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -72,8 +90,8 @@ export default function WorkoutDetailPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [authMissing, setAuthMissing] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  /** Quando true, exercício concluído aparece só na linha compacta (usuário escolheu recolher). */
-  const [collapsedCompletedIds, setCollapsedCompletedIds] = useState<Record<string, boolean>>({});
+  /** Concluídos ficam compactos por padrão; true = usuário abriu para ver peso/notas. */
+  const [expandedCompletedIds, setExpandedCompletedIds] = useState<Record<string, boolean>>({});
   const [sessionFinished, setSessionFinished] = useState<boolean>(false);
   const [isFinishing, setIsFinishing] = useState<boolean>(false);
   const [finishMessage, setFinishMessage] = useState<string>("");
@@ -96,7 +114,7 @@ export default function WorkoutDetailPage() {
       lastResetSessionForWorkoutIdRef.current = workoutId;
       setSessionFinished(false);
       setFinishMessage("");
-      setCollapsedCompletedIds({});
+      setExpandedCompletedIds({});
     }
     setIsLoading(true);
     const supabase = getSupabaseBrowserClient();
@@ -204,8 +222,15 @@ export default function WorkoutDetailPage() {
     });
     return () => subscription.unsubscribe();
   }, [loadData]);
-  function setExerciseCollapsed(exerciseId: string, collapsed: boolean) {
-    setCollapsedCompletedIds((prev) => ({ ...prev, [exerciseId]: collapsed }));
+  function expandCompletedExercise(exerciseId: string) {
+    setExpandedCompletedIds((prev) => ({ ...prev, [exerciseId]: true }));
+  }
+  function contractCompletedExercise(exerciseId: string) {
+    setExpandedCompletedIds((prev) => {
+      const next: Record<string, boolean> = { ...prev };
+      delete next[exerciseId];
+      return next;
+    });
   }
   async function toggleExercise(exerciseId: string, nextCompleted: boolean) {
     const supabase = getSupabaseBrowserClient();
@@ -218,9 +243,7 @@ export default function WorkoutDetailPage() {
     setExercises((prev) =>
       prev.map((ex) => (ex.id === exerciseId ? { ...ex, isCompleted: nextCompleted } : ex)),
     );
-    if (!nextCompleted) {
-      setExerciseCollapsed(exerciseId, false);
-    }
+    contractCompletedExercise(exerciseId);
     if (nextCompleted) {
       const { error: delErr } = await supabase
         .from("exercise_logs")
@@ -312,7 +335,7 @@ export default function WorkoutDetailPage() {
       }
     }
     setExercises((prev) => prev.map((e) => ({ ...e, isCompleted: true })));
-    setCollapsedCompletedIds({});
+    setExpandedCompletedIds({});
     const { error: checkinError } = await supabase.from("daily_checkins").insert({
       user_id: user.id,
       checkin_date: logDate,
@@ -480,14 +503,13 @@ export default function WorkoutDetailPage() {
           </div>
           <ul className="flex flex-col gap-4">
             {exercises.map((ex) => {
-              const isCompact: boolean =
-                ex.isCompleted && Boolean(collapsedCompletedIds[ex.id]);
+              const isCompact: boolean = ex.isCompleted && !expandedCompletedIds[ex.id];
               if (isCompact) {
                 return (
                   <li key={ex.id}>
                     <button
                       type="button"
-                      onClick={() => setExerciseCollapsed(ex.id, false)}
+                      onClick={() => expandCompletedExercise(ex.id)}
                       className="flex w-full items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3.5 text-left shadow-sm transition active:scale-[0.99] active:bg-[var(--muted)]"
                     >
                       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
@@ -540,10 +562,11 @@ export default function WorkoutDetailPage() {
                           {ex.isCompleted ? (
                             <button
                               type="button"
-                              onClick={() => setExerciseCollapsed(ex.id, true)}
-                              className="shrink-0 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] transition hover:bg-[var(--muted)]"
+                              onClick={() => contractCompletedExercise(ex.id)}
+                              className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+                              aria-label="Minimizar exercício"
                             >
-                              Recolher
+                              <IconChevronUp className="size-5" />
                             </button>
                           ) : null}
                         </div>
