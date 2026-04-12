@@ -482,7 +482,7 @@ export default function WorkoutDetailPage() {
           </Link>
         </AppCard>
       ) : sessionFinished ? null : (
-        <div className={showStickyFinish ? "pb-36" : ""}>
+        <div className={showStickyFinish ? "pb-44" : ""}>
           <div
             className="mb-4 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] p-3"
             role="status"
@@ -633,7 +633,7 @@ export default function WorkoutDetailPage() {
         </div>
       )}
       {showStickyFinish ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
+        <div className="pointer-events-none fixed inset-x-0 z-30 flex justify-center px-3 pb-2 pt-2 [bottom:max(5.5rem,calc(4.5rem+env(safe-area-inset-bottom,0px)))]">
           <div className="pointer-events-auto w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--card)]/95 p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md dark:shadow-[0_-8px_30px_rgba(0,0,0,0.35)]">
             <p className="text-center text-xs leading-snug text-[var(--muted-foreground)]">
               Quando terminar a sessão, use o botão abaixo para salvar o treino de hoje e registrar o
