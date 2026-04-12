@@ -13,6 +13,7 @@ const NAV_ITEMS: { href: string; label: string }[] = [
   { href: "/home", label: "Início" },
   { href: "/workouts", label: "Treinos" },
   { href: "/checkin", label: "Hábito" },
+  { href: "/desafio-60", label: "60 dias" },
   { href: "/create-workout", label: "Novo" },
 ];
 
@@ -58,6 +59,9 @@ export function AppShell({ children }: AppShellProps) {
                 }
                 if (item.href === "/checkin") {
                   return pathname === "/checkin";
+                }
+                if (item.href === "/desafio-60") {
+                  return pathname === "/desafio-60";
                 }
               if (item.href === "/create-workout") {
                 return (
