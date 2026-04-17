@@ -101,9 +101,12 @@ export default function WorkoutDetailPage() {
   useEffect(() => {
     exercisesRef.current = exercises;
   }, [exercises]);
-  const loadData = useCallback(async () => {
-    setLoadError(null);
-    setAuthMissing(false);
+  const loadData = useCallback(async (options: { isSilent?: boolean } = {}) => {
+    const isSilent: boolean = options.isSilent ?? false;
+    if (!isSilent) {
+      setLoadError(null);
+      setAuthMissing(false);
+    }
     if (!workoutId) {
       setWorkout(null);
       setExercises([]);
@@ -116,7 +119,9 @@ export default function WorkoutDetailPage() {
       setFinishMessage("");
       setExpandedCompletedIds({});
     }
-    setIsLoading(true);
+    if (!isSilent) {
+      setIsLoading(true);
+    }
     const supabase = getSupabaseBrowserClient();
     let user = (await supabase.auth.getUser()).data.user;
     if (!user) {
@@ -205,7 +210,9 @@ export default function WorkoutDetailPage() {
         };
       }),
     );
-    setIsLoading(false);
+    if (!isSilent) {
+      setIsLoading(false);
+    }
   }, [workoutId, logDate]);
   useEffect(() => {
     const timeoutId: number = window.setTimeout(() => {
@@ -217,8 +224,12 @@ export default function WorkoutDetailPage() {
     const supabase = getSupabaseBrowserClient();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      void loadData();
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        void loadData();
+        return;
+      }
+      void loadData({ isSilent: true });
     });
     return () => subscription.unsubscribe();
   }, [loadData]);
@@ -448,7 +459,7 @@ export default function WorkoutDetailPage() {
   return (
     <>
       <PageHeader
-        title={workout.name}
+        title="Treino"
         subtitle={
           sessionFinished
             ? "Treino concluído hoje"
