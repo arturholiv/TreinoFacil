@@ -89,7 +89,7 @@ export default function GerarTreinosPage() {
     <>
       <PageHeader
         title="Treinos com IA"
-        subtitle="Divisão clássica, fichas de 5 dias, 45 min, Leangains ou V-shape (7 dias)."
+        subtitle="Divisão clássica, fichas de 5 dias, 45 min e programas semanais (7 dias)."
         action={
           <Link
             href="/workouts"
@@ -109,7 +109,8 @@ export default function GerarTreinosPage() {
         </p>
         <p className="mt-3 text-xs leading-relaxed text-[var(--muted-foreground)]">
           Inclui o programa <strong>Leangains</strong> (foco estético, ombro lateral, costas, peito
-          superior, posterior e postura) além das divisões ABC tradicionais.
+          superior, posterior e postura), o <strong>V-shape</strong> e o novo{" "}
+          <strong>híbrido para corrida</strong> (Upper/Lower/Push/Pull/Legs + descansos).
         </p>
       </AppCard>
       <AppCard className="mb-6 flex flex-col gap-5">
@@ -142,6 +143,11 @@ export default function GerarTreinosPage() {
                   value: "VSHAPE_WEEK" as SplitKind,
                   label:
                     "V-shape — 7 dias: posterior, costas, ombro lateral, core, pump; domingo cardio + alongamento",
+                },
+                {
+                  value: "HYBRID_RUN_SUPPORT" as SplitKind,
+                  label:
+                    "Híbrido corrida — 7 dias: Upper, Lower, descanso, Push, Pull, Legs, descanso",
                 },
               ] as const
             ).map((opt) => (
@@ -234,7 +240,9 @@ export default function GerarTreinosPage() {
               ))}
             </div>
           </fieldset>
-        ) : splitKind === "LEANGAINS" || splitKind === "VSHAPE_WEEK" ? (
+        ) : splitKind === "LEANGAINS" ||
+          splitKind === "VSHAPE_WEEK" ||
+          splitKind === "HYBRID_RUN_SUPPORT" ? (
           <p className="text-sm text-[var(--muted-foreground)]">
             {splitKind === "LEANGAINS" ? (
               <>
@@ -250,6 +258,12 @@ export default function GerarTreinosPage() {
                 <strong>regras gerais</strong> nas notas da ficha e dicas por exercício. Segunda a
                 sábado: musculação + bloco &quot;Cardio (recomendado)&quot;; domingo: cardio leve e
                 alongamentos (sem cardio extra duplicado na lista).
+              </>
+            ) : splitKind === "HYBRID_RUN_SUPPORT" ? (
+              <>
+                Híbrido corrida gera <strong>sete treinos</strong> com a sequência{" "}
+                <strong>Upper, Lower, descanso, Push, Pull, Legs, descanso</strong>. O foco é manter
+                força e estética sem sabotar sua recuperação das corridas.
               </>
             )}
           </p>

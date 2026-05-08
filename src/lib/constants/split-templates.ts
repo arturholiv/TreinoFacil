@@ -33,7 +33,8 @@ export type SplitKind =
   | "FIVE_UPPER_LOWER"
   | "FORTY_FIVE_MIN"
   | "LEANGAINS"
-  | "VSHAPE_WEEK";
+  | "VSHAPE_WEEK"
+  | "HYBRID_RUN_SUPPORT";
 
 export type AbcFrequency = 3 | 6;
 
@@ -903,6 +904,159 @@ const SPLIT_VSHAPE_WEEK: SplitWorkoutDefinition[] = [
   },
 ];
 
+const HYBRID_RUN_SUPPORT_WEEK_DAYS: DayOfWeekKey[] = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+const HYBRID_RUN_SUPPORT_WORKOUT_NOTES: string = [
+  "Objetivo da semana: estética + performance, sem atrapalhar corrida.",
+  "",
+  "Pilares da execução:",
+  "- Progressão de carga ou repetições toda semana.",
+  "- Técnica limpa em todas as séries.",
+  "- Intensidade real (última série até a falha técnica, com segurança).",
+  "- Constância acima de perfeição.",
+  "",
+  "Ajuste para quem corre:",
+  "- Lower mais pesado.",
+  "- Legs mais moderado.",
+  "- Evitar falha extrema em perna para preservar recuperação e pace.",
+].join("\n");
+
+const HYBRID_RUN_SUPPORT_CARDIO_TRAINING_HINT: string = "15-25 min";
+const HYBRID_RUN_SUPPORT_CARDIO_REST_HINT: string = "20-35 min leve";
+const HYBRID_RUN_SUPPORT_CARDIO_NOTES: string =
+  "Cardio diário. Dias de musculação: 15-25 min após o treino (leve a moderado). Dias de descanso: 20-35 min leve em ritmo conversável.";
+
+const SPLIT_HYBRID_RUN_SUPPORT: SplitWorkoutDefinition[] = [
+  {
+    letter: "Seg",
+    title: "Upper",
+    workoutName: "Híbrido corrida — Upper",
+    cardioHint: HYBRID_RUN_SUPPORT_CARDIO_TRAINING_HINT,
+    cardioNotes: HYBRID_RUN_SUPPORT_CARDIO_NOTES,
+    workoutNotes: HYBRID_RUN_SUPPORT_WORKOUT_NOTES,
+    exercises: [
+      { name: "Supino reto", sets: 3, reps: "6-8" },
+      { name: "Remada curvada", sets: 3, reps: "6-8" },
+      { name: "Barra fixa ou puxada", sets: 3, reps: "8-10" },
+      { name: "Desenvolvimento com halteres", sets: 3, reps: "8-10" },
+      { name: "Elevação lateral", sets: 3, reps: "12-15" },
+      { name: "Rosca direta", sets: 2, reps: "10-12" },
+      { name: "Tríceps corda", sets: 2, reps: "10-12" },
+      { name: "Prancha", sets: 3, reps: "45-60s" },
+      { name: "Dead bug", sets: 3, reps: "10" },
+    ],
+  },
+  {
+    letter: "Ter",
+    title: "Lower",
+    workoutName: "Híbrido corrida — Lower (pesado)",
+    cardioHint: HYBRID_RUN_SUPPORT_CARDIO_TRAINING_HINT,
+    cardioNotes: HYBRID_RUN_SUPPORT_CARDIO_NOTES,
+    workoutNotes: HYBRID_RUN_SUPPORT_WORKOUT_NOTES,
+    exercises: [
+      { name: "Agachamento livre", sets: 3, reps: "5-8" },
+      { name: "Levantamento terra romeno", sets: 3, reps: "6-10" },
+      { name: "Leg press", sets: 3, reps: "10" },
+      { name: "Flexora", sets: 3, reps: "10-12" },
+      { name: "Panturrilha", sets: 4, reps: "12-15" },
+      { name: "Prancha lateral", sets: 3, reps: "30-45s" },
+      { name: "Hanging knee raises", sets: 3, reps: "10-15" },
+    ],
+  },
+  {
+    letter: "Qua",
+    title: "Descanso",
+    workoutName: "Híbrido corrida — Descanso",
+    cardioHint: HYBRID_RUN_SUPPORT_CARDIO_REST_HINT,
+    cardioNotes: HYBRID_RUN_SUPPORT_CARDIO_NOTES,
+    workoutNotes: HYBRID_RUN_SUPPORT_WORKOUT_NOTES,
+    exercises: [
+      {
+        name: "Recuperação ativa opcional",
+        sets: 1,
+        reps: "20-40 min",
+        notes: "Caminhada leve, mobilidade ou alongamentos. Sem fadiga residual.",
+      },
+    ],
+  },
+  {
+    letter: "Qui",
+    title: "Push",
+    workoutName: "Híbrido corrida — Push",
+    cardioHint: HYBRID_RUN_SUPPORT_CARDIO_TRAINING_HINT,
+    cardioNotes: HYBRID_RUN_SUPPORT_CARDIO_NOTES,
+    workoutNotes: HYBRID_RUN_SUPPORT_WORKOUT_NOTES,
+    exercises: [
+      { name: "Supino inclinado", sets: 3, reps: "8-10" },
+      { name: "Desenvolvimento militar", sets: 3, reps: "6-8" },
+      { name: "Paralelas ou mergulho", sets: 3, reps: "8-12" },
+      { name: "Crucifixo no cabo", sets: 3, reps: "12" },
+      { name: "Elevação lateral", sets: 3, reps: "15" },
+      { name: "Tríceps francês", sets: 2, reps: "10-12" },
+      { name: "Ab wheel", sets: 3, reps: "8-12" },
+    ],
+  },
+  {
+    letter: "Sex",
+    title: "Pull",
+    workoutName: "Híbrido corrida — Pull",
+    cardioHint: HYBRID_RUN_SUPPORT_CARDIO_TRAINING_HINT,
+    cardioNotes: HYBRID_RUN_SUPPORT_CARDIO_NOTES,
+    workoutNotes: HYBRID_RUN_SUPPORT_WORKOUT_NOTES,
+    exercises: [
+      { name: "Barra fixa ou puxada", sets: 3, reps: "6-10" },
+      { name: "Remada unilateral", sets: 3, reps: "8-10" },
+      { name: "Face pull", sets: 3, reps: "12-15" },
+      { name: "Remada baixa", sets: 3, reps: "10" },
+      { name: "Rosca direta", sets: 3, reps: "10" },
+      { name: "Rosca martelo", sets: 2, reps: "10-12" },
+      { name: "Cable crunch", sets: 3, reps: "12-15" },
+      { name: "Hollow hold", sets: 3, reps: "20-30s" },
+    ],
+  },
+  {
+    letter: "Sáb",
+    title: "Legs",
+    workoutName: "Híbrido corrida — Legs (moderado)",
+    cardioHint: HYBRID_RUN_SUPPORT_CARDIO_TRAINING_HINT,
+    cardioNotes: HYBRID_RUN_SUPPORT_CARDIO_NOTES,
+    workoutNotes: HYBRID_RUN_SUPPORT_WORKOUT_NOTES,
+    exercises: [
+      { name: "Front squat ou hack squat", sets: 3, reps: "6-10" },
+      { name: "Bulgarian split squat", sets: 3, reps: "8-10" },
+      { name: "Stiff", sets: 3, reps: "8-10" },
+      { name: "Extensora", sets: 3, reps: "12" },
+      { name: "Panturrilha sentado", sets: 4, reps: "15" },
+      { name: "Farmer carry", sets: 3, reps: "voltas" },
+      { name: "Prancha com peso", sets: 3, reps: "45s" },
+    ],
+  },
+  {
+    letter: "Dom",
+    title: "Descanso",
+    workoutName: "Híbrido corrida — Descanso",
+    cardioHint: HYBRID_RUN_SUPPORT_CARDIO_REST_HINT,
+    cardioNotes: HYBRID_RUN_SUPPORT_CARDIO_NOTES,
+    workoutNotes: HYBRID_RUN_SUPPORT_WORKOUT_NOTES,
+    exercises: [
+      {
+        name: "Recuperação ativa opcional",
+        sets: 1,
+        reps: "20-40 min",
+        notes: "Caminhada leve, mobilidade ou alongamentos. Sem fadiga residual.",
+      },
+    ],
+  },
+];
+
 const LEANGAINS_WEEK_DAYS: DayOfWeekKey[] = [
   "monday",
   "tuesday",
@@ -1070,6 +1224,7 @@ export const SPLIT_DEFINITIONS: Record<SplitKind, SplitWorkoutDefinition[]> = {
   FORTY_FIVE_MIN: SPLIT_FORTY_FIVE_MIN,
   LEANGAINS: SPLIT_LEANGAINS,
   VSHAPE_WEEK: SPLIT_VSHAPE_WEEK,
+  HYBRID_RUN_SUPPORT: SPLIT_HYBRID_RUN_SUPPORT,
 };
 
 /** Título curto para listagens (ex.: resumo de exercícios). */
@@ -1082,6 +1237,7 @@ export const SPLIT_KIND_LABELS_PT: Record<SplitKind, string> = {
   FORTY_FIVE_MIN: "45 min — intensidade (5 dias)",
   LEANGAINS: "Leangains (7 dias)",
   VSHAPE_WEEK: "V-shape — 7 dias (costas, ombro, posterior)",
+  HYBRID_RUN_SUPPORT: "Híbrido corrida — Upper/Lower/Push/Pull/Legs (7 dias)",
 };
 
 export type PlannedWorkout = {
@@ -1103,6 +1259,12 @@ export function buildWeeklyPlan(kind: SplitKind, abcFrequency: AbcFrequency): Pl
     return LEANGAINS_WEEK_DAYS.map((dayOfWeek, i) => ({
       dayOfWeek,
       definition: SPLIT_VSHAPE_WEEK[i] as SplitWorkoutDefinition,
+    }));
+  }
+  if (kind === "HYBRID_RUN_SUPPORT") {
+    return HYBRID_RUN_SUPPORT_WEEK_DAYS.map((dayOfWeek, i) => ({
+      dayOfWeek,
+      definition: SPLIT_HYBRID_RUN_SUPPORT[i] as SplitWorkoutDefinition,
     }));
   }
   const defs: SplitWorkoutDefinition[] = SPLIT_DEFINITIONS[kind];
