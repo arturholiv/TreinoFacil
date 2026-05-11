@@ -251,7 +251,7 @@ export default function GerarTreinosPage() {
                 mobilidade). Cardio por dia está nas notas do último bloco ou em &quot;Cardio
                 (recomendado)&quot; quando aplicável.
               </>
-            ) : (
+            ) : splitKind === "VSHAPE_WEEK" ? (
               <>
                 V-shape gera <strong>sete treinos</strong> (seg–dom) com foco em{" "}
                 <strong>costas, ombro lateral e posterior</strong>. Cada treino inclui{" "}
@@ -259,7 +259,7 @@ export default function GerarTreinosPage() {
                 sábado: musculação + bloco &quot;Cardio (recomendado)&quot;; domingo: cardio leve e
                 alongamentos (sem cardio extra duplicado na lista).
               </>
-            ) : splitKind === "HYBRID_RUN_SUPPORT" ? (
+            ) : (
               <>
                 Híbrido corrida gera <strong>sete treinos</strong> com a sequência{" "}
                 <strong>Upper, Lower, descanso, Push, Pull, Legs, descanso</strong>. O foco é manter
